@@ -49,6 +49,11 @@ h1 span{color:var(--yellow)}
 .date{font-family:var(--cond);font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:1.5px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
 .shareall{margin-top:22px;padding-top:16px;border-top:2px dashed var(--line,#d3ddf0)}.sa-title{font-weight:700;margin:0 0 8px}
+.estats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0}
+.estat{background:#fff;border:2px solid var(--line,#d3ddf0);border-radius:10px;padding:10px 12px}
+.estat b{display:block;font-family:var(--display);font-size:30px;line-height:1.05}
+.estat span{font-size:13px;color:var(--muted,#4a5a7a);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.streak-fire{color:#e8932e}
 .ladder{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .tab{appearance:none;border:0;cursor:pointer;font-family:var(--display);font-size:18px;letter-spacing:.8px;text-transform:uppercase;
   padding:9px 14px;border-radius:6px;background:rgba(255,255,255,.18);color:#fff;transform:skew(-6deg)}
@@ -58,7 +63,7 @@ h1 span{color:var(--yellow)}
 .panel h2{font-family:var(--display);font-weight:400;font-size:28px;margin:0;text-transform:uppercase;letter-spacing:.5px;text-wrap:balance}
 .muted{color:var(--ink-soft);margin:0}
 .diffs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-@media (max-width:420px){.diffs{grid-template-columns:1fr}.tabs{display:grid;grid-template-columns:1fr 1fr}.tab{font-size:15px;padding:8px 6px;text-align:center}.tab:first-child{grid-column:1/-1}}
+@media (max-width:420px){.diffs{grid-template-columns:1fr}.tabs{display:grid;grid-template-columns:1fr 1fr}.tab{font-size:15px;padding:8px 6px;text-align:center}.tab:first-child{grid-column:1/-1}.tab:last-child:nth-child(even){grid-column:1/-1}}
 .diff{appearance:none;border:0;cursor:pointer;border-radius:8px;padding:14px 12px;text-align:left;color:#fff;font-family:var(--body);display:flex;flex-direction:column;gap:4px;min-width:0;transition:transform .12s}
 .diff:hover{transform:translateY(-2px)} .diff:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
 .diff .lvl{font-family:var(--display);font-size:26px;line-height:1;text-transform:uppercase;letter-spacing:.6px}
@@ -137,6 +142,7 @@ footer{color:#fff;font-size:13px;text-align:center;text-shadow:0 1px 2px rgba(0,
     <button class="tab" role="tab" id="tab-daily" data-v="daily">By Difficulty</button>
     <button class="tab" role="tab" id="tab-seasons" data-v="seasons">Chapters &amp; Seasons</button>
     <button class="tab" role="tab" id="tab-where" data-v="where">Where Am I?</button>
+    <button class="tab" role="tab" id="tab-endless" data-v="endless">Endless</button>
     <button class="tab" role="tab" id="tab-bank" data-v="bank">Question Bank</button>
   </nav>
   <main id="app" class="panel" aria-live="polite"></main>
@@ -214,7 +220,7 @@ let S=null, view="daily";
 
 /* ---------- tabs ---------- */
 function setView(v){view=v;S=null;document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.v===v)));
-  ({main:mainView,daily:home,seasons:seasonsView,where:whereView,bank:bankView})[v]();window.scrollTo({top:0})}
+  ({main:mainView,daily:home,seasons:seasonsView,where:whereView,endless:endlessView,bank:bankView})[v]();window.scrollTo({top:0})}
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>setView(b.dataset.v));
 
 /* ---------- daily drop ---------- */
@@ -340,10 +346,58 @@ function whereView(){
   const clues=LOCQ.filter(q=>q.clue).length;
   app.innerHTML=`<span class="clue-head">${PIN}Where am I?</span>
   <p class="muted">Each round gives you clues written by a named location, from the original 2017 map to the Chapter 7 island. Name the place, or say when it first showed up. These also turn up in the Daily game.</p>
-  <div class="season-card"><span class="sub">${clues} location clues</span><span class="muted">${LOCQ.length-clues} more questions about when places arrived</span>
+  <div class="season-card"><span class="sub">${clues} location and landmark clues</span><span class="muted">Plus ${LOCQ.length-clues} trivia questions about places, like when they arrived or what replaced them</span>
   <div class="counts">${Object.keys(TIERS).map(t=>{const n=LOCQ.filter(q=>q.t===t).length;return n?`<span class="chip c-${t}">${n} ${TIERS[t].label}</span>`:""}).join("")}</div></div>
   <div class="row"><button class="btn" id="where10">Play 10</button></div>`;
   document.getElementById("where10").onclick=()=>startWhere(10);
+}
+/* ---------- endless ---------- */
+const EKEY="dropin:endless";
+const eStats=()=>Object.assign({best:0,right:0,total:0},store.get(EKEY)||{});
+let eTier="all";
+function endlessView(){
+  const st=eStats();
+  app.innerHTML=`<h2>Endless</h2><p class="muted">Questions keep coming until you stop. Build a streak; one miss resets it. Nothing repeats until you've seen every question in your pick.</p>
+   <div class="estats"><div class="estat"><span>Best streak</span><b>${st.best}</b></div><div class="estat"><span>All-time</span><b>${st.right}/${st.total}</b></div><div class="estat"><span>Accuracy</span><b>${st.total?Math.round(100*st.right/st.total)+"%":"–"}</b></div></div>
+   <div class="field"><label for="e-tier">Difficulty</label><select id="e-tier"><option value="all">Mixed (every difficulty)</option>${Object.keys(TIERS).map(t=>`<option value="${t}"${eTier===t?" selected":""}>${TIERS[t].label} (${TIERS[t].tier})</option>`).join("")}</select></div>
+   <div class="row" style="margin-top:14px"><button class="btn" id="e-go">Start</button>${st.total?`<button class="btn ghost" id="e-reset">Reset stats</button>`:""}</div>`;
+  const sel=document.getElementById("e-tier");sel.value=eTier;sel.onchange=()=>eTier=sel.value;
+  document.getElementById("e-go").onclick=()=>{const pool=Q.filter(q=>eTier==="all"||q.t===eTier);
+    S={mode:"endless",pool,deck:shuffle(pool),i:0,streak:0,right:0,total:0,best:eStats().best};endlessQ()};
+  const r=document.getElementById("e-reset");if(r)r.onclick=()=>{if(confirm("Reset your Endless stats?")){store.set(EKEY,{best:0,right:0,total:0});endlessView()}};
+}
+function endlessHud(){return `<div class="hud"><span class="chip c-m">Endless</span><span class="score">${S.streak>=3?`<span class="streak-fire">🔥 </span>`:""}Streak ${S.streak} · ${S.right}/${S.total}</span></div>`}
+function endlessQ(){
+  if(S.i>=S.deck.length){S.deck=shuffle(S.pool);S.i=0}
+  const q=withOpts(S.deck[S.i]);S.cur=q;
+  app.innerHTML=endlessHud()+(q.era&&!tagLeaks(q)?`<span class="era">${esc(eraLabel(q.era))}</span>`:"")+`<div>${chip(q.t)}</div>`+
+   (q.clue?`<span class="clue-head">${PIN}Where am I?</span><p class="clue">${esc(q.q)}</p>`:`<p class="q">${esc(q.q)}</p>`)+
+   `<div class="opts">${q.opts.map((o,k)=>`<button class="opt" data-o="${esc(o)}"><span class="k">${"ABCD"[k]}</span><span>${esc(o)}</span></button>`).join("")}</div><div id="after"></div>`;
+  app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>endlessAnswer(b));
+}
+function endlessAnswer(btn){
+  const q=S.cur,ok=btn.dataset.o===q.a;
+  app.querySelectorAll(".opt").forEach(b=>{b.disabled=true;if(b.dataset.o===q.a)b.classList.add("right");else if(b===btn)b.classList.add("wrong");else b.classList.add("dim")});
+  const lost=S.streak;S.total++;if(ok){S.right++;S.streak++}else S.streak=0;S.i++;
+  const st=eStats();st.total++;if(ok)st.right++;const newBest=S.streak>st.best;if(newBest)st.best=S.streak;store.set(EKEY,st);
+  app.querySelector(".hud").outerHTML=endlessHud();
+  document.getElementById("after").innerHTML=`<div class="explain" style="border-color:${ok?"var(--right)":"var(--wrong)"}">
+    <span class="verdict" style="color:${ok?"var(--right)":"var(--wrong)"}">${ok?(newBest&&S.streak>1?"New best streak!":"Hit!"):(lost>=3?`Streak over at ${lost}.`:"Missed.")}</span>
+    <p>${esc(q.e)}</p><span class="src">${esc(q.id)} · Source: ${srcLink(q.s)}</span></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="next">Next question</button><button class="btn ghost" id="stop">Stop</button></div>`;
+  const nb=document.getElementById("next");nb.onclick=endlessQ;nb.focus();
+  document.getElementById("stop").onclick=endlessEnd;
+}
+function endlessEnd(){
+  const st=eStats(),share=`Drop-In Daily Endless\n${S.right}/${S.total} right · best streak ${st.best}`;
+  app.innerHTML=`<div class="hud"><span class="chip c-m">Endless</span><span class="score">${S.right}/${S.total}</span></div>
+   <p class="result-title">${S.total?Math.round(100*S.right/S.total):0}% this run</p>
+   <div class="estats"><div class="estat"><span>This run</span><b>${S.right}/${S.total}</b></div><div class="estat"><span>Best streak</span><b>${st.best}</b></div><div class="estat"><span>All-time</span><b>${st.right}/${st.total}</b></div></div>
+   <pre class="share" id="share">${esc(share)}</pre>
+   <div class="row"><button class="btn" id="copy">Copy result</button><button class="btn ghost" id="again">Keep going</button><button class="btn ghost" id="back">Back</button><span class="toast" id="toast"></span></div>`;
+  document.getElementById("copy").onclick=()=>copyText(share,"toast",document.getElementById("share"));
+  document.getElementById("again").onclick=endlessQ;
+  document.getElementById("back").onclick=()=>setView("endless");
 }
 function startWhere(size){S={mode:"where",size,title:"Where Am I?",qs:shuffle(LOCQ).slice(0,size).map(q=>withOpts(q)),i:0,marks:[]};question()}
 
