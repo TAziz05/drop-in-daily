@@ -1,0 +1,224 @@
+<title>Drop-In Daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: single centered column, lobby-sky backdrop, one question card at a time; rarity colors encode difficulty. Single bright theme by choice. */
+:root{
+  color-scheme: light;
+  --sky-top:#1d6fe0; --sky-bot:#5fb4ff;
+  --ink:#0d1b3d; --ink-soft:#3c4d74;
+  --card:#f6f9ff; --line:#c9d6ef;
+  --yellow:#ffd53d; --yellow-ink:#3a2a00;
+  --uncommon:#3bb54a; --rare:#2f8cff; --legendary:#e8952a;
+  --right:#2fa84f; --wrong:#e2453c;
+  --display:"Lilita One","Arial Black",Impact,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --cond:"Barlow Condensed","Arial Narrow",sans-serif;
+}
+html,body{min-height:100%}
+body{
+  background:var(--sky-top);
+  background-image:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-bot) 70%,#a9d8ff 100%);
+  background-attachment:fixed;
+  color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;
+  padding-inline:16px;padding-block:20px 48px;
+}
+.wrap{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 16px;color:#fff}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(34px,8vw,52px);line-height:.95;margin:0;letter-spacing:.5px;
+  text-shadow:0 3px 0 #0b3f8f,0 6px 14px rgba(0,30,80,.35);transform:skew(-6deg)}
+h1 span{color:var(--yellow)}
+.date{font-family:var(--cond);font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:1.5px;opacity:.95}
+.panel{background:var(--card);border-radius:10px;box-shadow:0 6px 0 rgba(10,40,100,.25),0 12px 28px rgba(10,40,100,.2);padding:20px;display:flex;flex-direction:column;gap:14px}
+.panel h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;text-wrap:balance}
+.muted{color:var(--ink-soft);margin:0}
+.diffs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:480px){.diffs{grid-template-columns:1fr}}
+.diff{appearance:none;border:0;cursor:pointer;border-radius:8px;padding:14px 12px;text-align:left;color:#fff;font-family:var(--body);
+  display:flex;flex-direction:column;gap:4px;min-width:0;position:relative;transition:transform .12s}
+.diff:hover{transform:translateY(-2px)} .diff:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.diff .lvl{font-family:var(--display);font-size:22px;line-height:1}
+.diff .tier{font-family:var(--cond);font-weight:700;text-transform:uppercase;letter-spacing:1.4px;font-size:12px;opacity:.9}
+.diff .who{font-size:13.5px;line-height:1.3;opacity:.95}
+.diff .done{font-family:var(--cond);font-weight:700;font-size:13px;background:rgba(0,0,0,.22);border-radius:4px;padding:2px 6px;align-self:flex-start;margin-top:4px}
+.d-easy{background:linear-gradient(160deg,#55cf5f,var(--uncommon) 55%,#22862f)}
+.d-medium{background:linear-gradient(160deg,#59a8ff,var(--rare) 55%,#1a5fc4)}
+.d-hard{background:linear-gradient(160deg,#ffbd52,var(--legendary) 55%,#b8661a)}
+.hud{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.chip{font-family:var(--cond);font-weight:700;text-transform:uppercase;letter-spacing:1.3px;font-size:13px;color:#fff;border-radius:4px;padding:3px 8px}
+.pips{display:flex;gap:6px}
+.pip{width:22px;height:8px;border-radius:2px;background:var(--line)}
+.pip.cur{background:var(--ink)} .pip.ok{background:var(--right)} .pip.no{background:var(--wrong)}
+.q{font-size:20px;font-weight:700;line-height:1.3;margin:0;text-wrap:balance}
+.opts{display:grid;gap:8px}
+.opt{appearance:none;font:inherit;font-weight:600;text-align:left;cursor:pointer;background:#fff;color:var(--ink);
+  border:2px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;gap:12px;align-items:center;transition:border-color .12s,background .12s}
+.opt:hover:not(:disabled){border-color:var(--rare)}
+.opt:focus-visible{outline:3px solid var(--yellow);outline-offset:1px}
+.opt .k{font-family:var(--cond);font-weight:700;width:24px;height:24px;flex:none;display:grid;place-items:center;border-radius:4px;background:var(--line);color:var(--ink);font-size:14px}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--right);background:#e6f6ea} .opt.right .k{background:var(--right);color:#fff}
+.opt.wrong{border-color:var(--wrong);background:#fdeceb} .opt.wrong .k{background:var(--wrong);color:#fff}
+.opt.dim{opacity:.55}
+.explain{border-left:4px solid var(--rare);background:#eaf2ff;border-radius:0 6px 6px 0;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.explain p{margin:0}
+.explain .verdict{font-family:var(--display);font-size:18px}
+.src{font-family:var(--cond);font-weight:600;font-size:14px;color:var(--ink-soft)}
+.src a{color:#1a5fc4}
+.btn{appearance:none;border:0;cursor:pointer;font-family:var(--display);font-size:20px;letter-spacing:.3px;
+  background:var(--yellow);color:var(--yellow-ink);border-radius:8px;padding:12px 18px;box-shadow:0 4px 0 #c99e12;align-self:flex-start;transition:transform .08s}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #c99e12}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.result-title{font-family:var(--display);font-size:clamp(30px,7vw,42px);line-height:1;margin:0;transform:skew(-6deg);transform-origin:left}
+.score{font-family:var(--cond);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
+.recap{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.recap li{display:flex;gap:10px;align-items:baseline;font-size:15px}
+.recap .m{font-weight:700;flex:none;width:18px}
+.recap .ok{color:var(--right)} .recap .no{color:var(--wrong)}
+.share{font-family:var(--cond);font-size:16px;background:#fff;border:2px dashed var(--line);border-radius:6px;padding:10px 12px;white-space:pre-wrap;margin:0;user-select:all}
+.toast{font-family:var(--cond);font-weight:600;color:var(--right)}
+footer{color:#fff;font-size:13px;opacity:.9;text-align:center;text-shadow:0 1px 2px rgba(0,30,80,.4)}
+footer a{color:#fff}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Drop-In <span>Daily</span></h1>
+    <div class="date" id="date"></div>
+  </header>
+  <main id="app" class="panel" aria-live="polite"></main>
+  <footer>Five new questions per difficulty every day. Facts drawn from the Fortnite Wiki (weirdgloop), Fortnite Fandom and Wikipedia; each answer links its source.</footer>
+</div>
+
+<script>
+const W="https://en.wikipedia.org/wiki/", G="https://fortnite.weirdgloop.org/w/";
+const BANK={
+easy:[
+ {q:"How many players can drop into a standard Battle Royale match?",a:"100",w:["50","64","150"],e:"Battle Royale matches hold up to 100 players, solo or in squads.",s:W+"Fortnite_Battle_Royale"},
+ {q:"What do players jump out of at the start of every match?",a:"The Battle Bus",w:["The Battle Blimp","The Loot Llama","The Party Plane"],e:"Everyone skydives from the flying Battle Bus. Donald Mustard got the idea after seeing a school bus.",s:W+"Fortnite_Battle_Royale"},
+ {q:"Which company develops Fortnite?",a:"Epic Games",w:["Riot Games","Psyonix","Blizzard"],e:"Epic Games develops and publishes Fortnite.",s:W+"Fortnite"},
+ {q:"Which three building materials can you harvest?",a:"Wood, stone and metal",w:["Wood, brick and glass","Stone, ice and metal","Wood, sand and steel"],e:"Wood builds fastest but breaks easiest; metal is the toughest but slowest.",s:W+"Fortnite_Battle_Royale"},
+ {q:"What is Fortnite's in-game currency called?",a:"V-Bucks",w:["Gold Bars","Battle Coins","F-Credits"],e:"V-Bucks buy outfits, emotes and the Battle Pass.",s:W+"Fortnite"},
+ {q:"Which item does every player start each match with?",a:"A pickaxe",w:["A pistol","A bandage","A shield potion"],e:"The pickaxe is the only item you get at the start; it harvests materials.",s:W+"Fortnite_Battle_Royale"},
+ {q:"Which mode removes building entirely?",a:"Zero Build",w:["No Build Royale","Classic","Battle Lab"],e:"Zero Build arrived in March 2022 and adds a regenerating overshield instead.",s:W+"Fortnite_Battle_Royale"},
+ {q:"What shrinks the playable area during a match?",a:"The storm",w:["Rising lava","A sandstorm wall","A meteor shower"],e:"Players outside the eye of the storm take damage over time.",s:W+"Fortnite_Battle_Royale"},
+ {q:"Which of these is the highest weapon rarity in the classic set?",a:"Legendary",w:["Epic","Rare","Uncommon"],e:"The classic order runs Common, Uncommon, Rare, Epic, Legendary.",s:W+"Fortnite_Battle_Royale"},
+ {q:"How many items can you hold in your inventory slots at once?",a:"5",w:["4","6","8"],e:"Only five items fit at a time, so loadouts take tough choices.",s:W+"Fortnite_Battle_Royale"},
+ {q:"What does a Reboot Van let you do?",a:"Bring back eliminated teammates",w:["Refill your shield","Swap your outfit mid-match","Call in a supply drop"],e:"Reboot Vans arrived in April 2019 so squads could revive fallen players.",s:W+"Fortnite_Battle_Royale"},
+ {q:"Which Fortnite mode is a rhythm game made by Harmonix?",a:"Fortnite Festival",w:["Rocket Racing","LEGO Fortnite","Party Royale"],e:"Festival plays like Rock Band, by the same studio.",s:W+"Fortnite"},
+ {q:"How much shield does one (current) Shield Potion give?",a:"50",w:["25","75","100"],e:"A Shield Potion gives 50 shield in total.",s:G+"Shield_Potion"},
+],
+medium:[
+ {q:"In what year did Fortnite Battle Royale launch?",a:"2017",w:["2016","2018","2019"],e:"It launched on September 26, 2017, after about two months of development.",s:W+"Fortnite_Battle_Royale"},
+ {q:"Who won the solo Fortnite World Cup in 2019?",a:"Bugha",w:["Psalm","Mongraal","Clix"],e:"Kyle 'Bugha' Giersdorf won at age 16.",s:W+"Fortnite_World_Cup"},
+ {q:"How much did the 2019 solo World Cup champion take home?",a:"$3 million",w:["$1 million","$1.8 million","$5 million"],e:"Bugha won the US$3 million top prize out of a $30 million pool.",s:W+"Fortnite_World_Cup"},
+ {q:"Where were the 2019 World Cup finals held?",a:"Arthur Ashe Stadium, New York",w:["Madison Square Garden, New York","The Forum, Los Angeles","Mercedes-Benz Arena, Berlin"],e:"The finals ran July 26–28, 2019 at Arthur Ashe Stadium.",s:W+"Fortnite_World_Cup"},
+ {q:"What was Travis Scott's 2020 in-game concert called?",a:"Astronomical",w:["Highest in the Room","Utopia Live","Cactus Jack World"],e:"Astronomical used effects you could only pull off in-game.",s:W+"Fortnite_Battle_Royale"},
+ {q:"Roughly how many live viewers did Travis Scott's first Fortnite show draw?",a:"12.3 million",w:["5.8 million","10.7 million","27.7 million"],e:"Variety reported 12.3 million, an all-time Fortnite record at the time.",s:W+"Fortnite_Battle_Royale"},
+ {q:"Which DJ played Fortnite's first in-game concert in February 2019?",a:"Marshmello",w:["Diplo","Steve Aoki","Deadmau5"],e:"Marshmello's show drew more than 10 million players.",s:W+"Fortnite_Battle_Royale"},
+ {q:"With which chapter did Fortnite move to Unreal Engine 5?",a:"Chapter 3",w:["Chapter 2","Chapter 4","Chapter 5"],e:"Chapter 3 launched on December 5, 2021 on Unreal Engine 5.",s:W+"Fortnite_Battle_Royale"},
+ {q:"What does a Chug Jug restore?",a:"100 health and 100 shield",w:["100 shield only","100 health only","75 health and 50 shield"],e:"It fills both bars, but you have to wait out the drink.",s:G+"Chug_Jug"},
+ {q:"Which mode uses 40-player matches on smaller islands with respawns?",a:"Reload",w:["Blitz Royale","Team Rumble","Delulu"],e:"Reload launched in June 2024.",s:W+"Fortnite_Battle_Royale"},
+ {q:"How many players are in a Blitz Royale match?",a:"32",w:["24","40","50"],e:"Blitz Royale (June 2025) is a fast 32-player mode.",s:W+"Fortnite_Battle_Royale"},
+ {q:"Which studio makes Rocket Racing?",a:"Psyonix",w:["Harmonix","Mediatonic","Iron Galaxy"],e:"Psyonix, the Rocket League studio, built Rocket Racing.",s:W+"Fortnite"},
+ {q:"Fans' nickname for the game got its own harvestable truck on the map. What was it?",a:"Fork Knife",w:["Fork Night","Fourtnite","Fort Bite"],e:"Epic added a Fork Knife food truck once the joke caught on.",s:W+"Fortnite_Battle_Royale"},
+ {q:"Which Chapter 1 location did the Season 4 comet hit?",a:"Dusty Depot",w:["Tilted Towers","Loot Lake","Retail Row"],e:"The comet struck Dusty Depot and left a giant crater at the start of Season 4.",s:W+"Fortnite_Battle_Royale"},
+],
+hard:[
+ {q:"Which duo won the 2019 World Cup duos final?",a:"Nyhrox and Aqua",w:["Rojo and Wolfiez","Saf and Zayt","Mongraal and Mitr0"],e:"Nyhrox and Aqua split the $3 million duos prize with 51 points.",s:W+"Fortnite_World_Cup"},
+ {q:"How many points did Bugha score in the 2019 solo World Cup final?",a:"59",w:["33","45","51"],e:"Bugha's 59 was 26 points clear of second-place psalm (33).",s:W+"Fortnite_World_Cup"},
+ {q:"What was the codename for The End (Chapter 1's finale) in the game files?",a:"NightNight",w:["Blackout","Singularity","Zero Hour"],e:"The files called it NightNight.",s:G+"The_End_(Chapter_1)"},
+ {q:"Roughly how long were players locked out of the game during The End's black hole?",a:"About 36 hours",w:["About 6 hours","About 12 hours","About 72 hours"],e:"From October 13 to 15, 2019, the game showed only the black hole.",s:G+"The_End_(Chapter_1)"},
+ {q:"The playlist image for The End shows The Visitor. Who actually built the rocket used in the event?",a:"The Scientist",w:["The Visitor","The Paradigm","Jonesy"],e:"The Scientist built and launched it from Dusty Depot.",s:G+"The_End_(Chapter_1)"},
+ {q:"What was the Chapter 2 island created after The End?",a:"Apollo",w:["Athena","Artemis","Asteria"],e:"Apollo and Artemis were both created; Chapter 2 Season 1 took place on Apollo. Athena was the Chapter 1 island.",s:G+"The_End_(Chapter_1)"},
+ {q:"Plug the numbers from the black hole into Google Maps and where do you land?",a:"Christmas Island",w:["Easter Island","Area 51","Epic's Cary, NC office"],e:"A popular find in the wiki's trivia for the event.",s:G+"The_End_(Chapter_1)"},
+ {q:"How long does a Chug Jug take to drink?",a:"15 seconds",w:["5 seconds","10 seconds","20 seconds"],e:"It's the slowest heal around, so you need solid cover.",s:G+"Chug_Jug"},
+ {q:"What is the Chug Jug called in the game files?",a:"Super Medkit",w:["Mega Potion","Big Slurp","Full Restore"],e:"Its item ID is Clyde_Athena_SuperMedkit.",s:G+"Chug_Jug"},
+ {q:"What is the max stack for the current (Chapter 5+) Shield Potion?",a:"3",w:["2","4","6"],e:"Three per slot, with a 1-second delay before shields start ticking in.",s:G+"Shield_Potion"},
+ {q:"Which group wants to destroy the Zero Point?",a:"The Imagined Order",w:["The Seven","Ghost","Shadow"],e:"The Seven protect the Zero Point; the Imagined Order want it gone.",s:W+"Fortnite_Battle_Royale"},
+ {q:"What peak concurrent player count did Epic report in November 2018?",a:"8.3 million",w:["3.4 million","6.1 million","10.8 million"],e:"Up from the previous record of 3.4 million in February 2018.",s:W+"Fortnite_Battle_Royale"},
+ {q:"After the March 2026 price change, how many V-Bucks does $10 buy?",a:"800",w:["1,000","1,100","950"],e:"Epic cut the $10 bundle from 1,000 to 800 V-Bucks, about a 20% increase.",s:W+"Fortnite"},
+ {q:"When did Save the World stop being pay-to-play?",a:"April 2026",w:["June 2020","December 2023","November 2024"],e:"Epic made Save the World free-to-play in April 2026.",s:W+"Fortnite"},
+ {q:"In what month and year did the first live event, the rocket launch, happen?",a:"June 2018",w:["May 2018","October 2018","February 2019"],e:"The launch cracked the sky and led into Season 5's rift.",s:W+"Fortnite_Battle_Royale"},
+]};
+const META={easy:{label:"Easy",tier:"Uncommon",who:"For the every-now-and-then player",cls:"d-easy",color:"var(--uncommon)"},
+ medium:{label:"Medium",tier:"Rare",who:"For the weekly squad regular",cls:"d-medium",color:"var(--rare)"},
+ hard:{label:"Hard",tier:"Legendary",who:"For the every-single-day sweat",cls:"d-hard",color:"var(--legendary)"}};
+const PER_DAY=5;
+
+const now=new Date();
+const dayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+const dayNum=Math.floor(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())/864e5);
+document.getElementById("date").textContent=now.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function shuffle(arr,r){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function todays(diff){
+  const pool=BANK[diff], salt={easy:11,medium:23,hard:37}[diff];
+  // Rotate through a shuffled cycle so questions don't repeat until the pool is used up.
+  const per=Math.floor(pool.length/PER_DAY), cycle=Math.floor(dayNum/per), slot=dayNum%per;
+  const order=shuffle(pool.map((_,i)=>i),rng(cycle*97+salt));
+  const r=rng(dayNum*131+salt);
+  return order.slice(slot*PER_DAY,slot*PER_DAY+PER_DAY).map(i=>{const x=pool[i];return{...x,opts:shuffle([x.a,...x.w],r)}});
+}
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const keyFor=d=>`dropin:${dayKey}:${d}`;
+
+const app=document.getElementById("app");
+let S=null;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function home(){
+  S=null;
+  app.innerHTML=`<h2>Pick your drop</h2><p class="muted">Five questions, one shot each. Questions reset at midnight your time.</p>
+  <div class="diffs">${Object.keys(META).map(d=>{const m=META[d],done=store.get(keyFor(d));
+   return `<button class="diff ${m.cls}" data-d="${d}" id="pick-${d}"><span class="tier">${m.tier}</span><span class="lvl">${m.label}</span><span class="who">${m.who}</span>${done?`<span class="done">Played · ${done.marks.filter(Boolean).length}/${PER_DAY}</span>`:""}</button>`}).join("")}</div>`;
+  app.querySelectorAll(".diff").forEach(b=>b.onclick=()=>start(b.dataset.d));
+}
+function start(diff){
+  const done=store.get(keyFor(diff));
+  S={diff,qs:todays(diff),i:0,marks:[],picked:[]};
+  if(done){S.marks=done.marks;S.picked=done.picked||[];return results()}
+  question();
+}
+function hud(){const m=META[S.diff];
+  return `<div class="hud"><span class="chip" style="background:${m.color}">${m.tier} · ${m.label}</span>
+  <div class="pips" aria-label="Question ${S.i+1} of ${PER_DAY}">${S.qs.map((_,k)=>`<span class="pip ${k<S.marks.length?(S.marks[k]?"ok":"no"):k===S.i?"cur":""}"></span>`).join("")}</div></div>`}
+function question(){
+  const q=S.qs[S.i];
+  app.innerHTML=hud()+`<p class="q">${esc(q.q)}</p><div class="opts">${q.opts.map((o,k)=>`<button class="opt" id="opt-${k}" data-o="${esc(o)}"><span class="k">${"ABCD"[k]}</span><span>${esc(o)}</span></button>`).join("")}</div><div id="after"></div>`;
+  app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(b));
+}
+function answer(btn){
+  const q=S.qs[S.i], pick=btn.dataset.o, ok=pick===q.a;
+  S.marks.push(ok);S.picked.push(pick);
+  app.querySelectorAll(".opt").forEach(b=>{b.disabled=true;
+    if(b.dataset.o===q.a)b.classList.add("right");else if(b===btn)b.classList.add("wrong");else b.classList.add("dim")});
+  app.querySelector(".hud").outerHTML=hud();
+  const last=S.i===PER_DAY-1;
+  document.getElementById("after").innerHTML=`<div class="explain" style="border-color:${ok?"var(--right)":"var(--wrong)"}">
+    <span class="verdict" style="color:${ok?"var(--right)":"var(--wrong)"}">${ok?"Hit!":"Missed."}</span>
+    <p>${esc(q.e)}</p><span class="src">Source: <a href="${q.s}" target="_blank" rel="noopener">${q.s.includes("wikipedia")?"Wikipedia":"Fortnite Wiki"} – ${esc(decodeURIComponent(q.s.split("/").pop()).replace(/_/g," "))}</a></span></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="next">${last?"See results":"Next question"}</button></div>`;
+  document.getElementById("next").onclick=()=>{if(last){store.set(keyFor(S.diff),{marks:S.marks,picked:S.picked});results()}else{S.i++;question()}};
+  document.getElementById("next").focus();
+}
+function rank(n){return n===5?"Victory Royale!":n===4?"Top 2":n===3?"Top 10":n===2?"Top 25":n===1?"Landed hot":"Eliminated"}
+function results(){
+  const n=S.marks.filter(Boolean).length, m=META[S.diff];
+  const grid=S.marks.map(x=>x?"🟩":"🟥").join("");
+  const share=`Drop-In Daily ${dayKey}\n${m.label} (${m.tier}) ${n}/${PER_DAY} ${grid}`;
+  app.innerHTML=`<div class="hud"><span class="chip" style="background:${m.color}">${m.tier} · ${m.label}</span><span class="score">${n}/${PER_DAY}</span></div>
+   <p class="result-title" style="color:${n===5?"var(--legendary)":"var(--ink)"}">${rank(n)}</p>
+   <ul class="recap">${S.qs.map((q,k)=>`<li><span class="m ${S.marks[k]?"ok":"no"}">${S.marks[k]?"✓":"✗"}</span><span>${esc(q.q)} <strong>${esc(q.a)}</strong> · <a class="src" href="${q.s}" target="_blank" rel="noopener">source</a></span></li>`).join("")}</ul>
+   <pre class="share" id="share">${esc(share)}</pre>
+   <div class="row"><button class="btn" id="copy">Copy result</button><button class="btn ghost" id="back">Try another difficulty</button><span class="toast" id="toast"></span></div>`;
+  document.getElementById("back").onclick=home;
+  document.getElementById("copy").onclick=()=>{const t=document.getElementById("toast");
+    navigator.clipboard.writeText(share).then(()=>t.textContent="Copied").catch(()=>{const r=document.createRange();r.selectNodeContents(document.getElementById("share"));const s=getSelection();s.removeAllRanges();s.addRange(r);t.textContent="Selected; press Ctrl/Cmd+C"})};
+}
+home();
+</script>
