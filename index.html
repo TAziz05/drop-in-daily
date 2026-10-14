@@ -30,6 +30,7 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(40px,10vw,64px);li
 h1 span{color:var(--yellow)}
 .date{font-family:var(--cond);font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:1.5px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
+.ladder{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .tab{appearance:none;border:0;cursor:pointer;font-family:var(--display);font-size:18px;letter-spacing:.8px;text-transform:uppercase;
   padding:9px 14px;border-radius:6px;background:rgba(255,255,255,.18);color:#fff;transform:skew(-6deg)}
 .tab[aria-selected="true"]{background:var(--yellow);color:var(--yellow-ink);box-shadow:0 3px 0 #c99e12}
@@ -38,7 +39,7 @@ h1 span{color:var(--yellow)}
 .panel h2{font-family:var(--display);font-weight:400;font-size:28px;margin:0;text-transform:uppercase;letter-spacing:.5px;text-wrap:balance}
 .muted{color:var(--ink-soft);margin:0}
 .diffs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-@media (max-width:420px){.diffs{grid-template-columns:1fr}.tabs{display:grid;grid-template-columns:1fr 1fr}.tab{font-size:15px;padding:8px 6px;text-align:center}}
+@media (max-width:420px){.diffs{grid-template-columns:1fr}.tabs{display:grid;grid-template-columns:1fr 1fr}.tab{font-size:15px;padding:8px 6px;text-align:center}.tab:first-child{grid-column:1/-1}}
 .diff{appearance:none;border:0;cursor:pointer;border-radius:8px;padding:14px 12px;text-align:left;color:#fff;font-family:var(--body);display:flex;flex-direction:column;gap:4px;min-width:0;transition:transform .12s}
 .diff:hover{transform:translateY(-2px)} .diff:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
 .diff .lvl{font-family:var(--display);font-size:26px;line-height:1;text-transform:uppercase;letter-spacing:.6px}
@@ -113,7 +114,8 @@ footer{color:#fff;font-size:13px;text-align:center;text-shadow:0 1px 2px rgba(0,
     <div class="date" id="date"></div>
   </header>
   <nav class="tabs" role="tablist" aria-label="Game modes">
-    <button class="tab" role="tab" id="tab-daily" data-v="daily">Daily</button>
+    <button class="tab" role="tab" id="tab-main" data-v="main">Daily Drop</button>
+    <button class="tab" role="tab" id="tab-daily" data-v="daily">By Difficulty</button>
     <button class="tab" role="tab" id="tab-seasons" data-v="seasons">Chapters &amp; Seasons</button>
     <button class="tab" role="tab" id="tab-where" data-v="where">Where Am I?</button>
     <button class="tab" role="tab" id="tab-bank" data-v="bank">Question Bank</button>
@@ -140,8 +142,12 @@ document.getElementById("date").textContent=now.toLocaleDateString(undefined,{we
 function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function shuffle(arr,r=Math.random){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 const withOpts=(x,r)=>({...x,opts:shuffle([x.a,...x.w],r)});
-function todays(t){
-  const pool=Q.filter(q=>q.t===t).sort((a,b)=>a.id<b.id?-1:1), salt={e:11,m:23,h:37,x:53}[t], L=pool.length, cache=[];
+// Each tier has one rotation shared by By Difficulty and the Daily Drop. Through Oct 14, 2026
+// a day used 5 slots; from Oct 15 each day uses 5 for By Difficulty, then the Daily Drop's share.
+const MAIN_MIX={e:1,m:1,h:2,x:1};
+const slotStart=(t,d)=>d<=1?d*PER_DAY:2*PER_DAY+(d-2)*(PER_DAY+MAIN_MIX[t]);
+function todays(t,per=PER_DAY,salt={e:11,m:23,h:37,x:53}[t],start=slotStart(t,dayNum)){
+  const pool=Q.filter(q=>q.t===t).sort((a,b)=>a.id<b.id?-1:1), L=pool.length, cache=[];
   // Each pass reshuffles within thirds of the previous pass's order, so a question
   // played late in one pass comes back late in the next (always days apart).
   const perm=c=>{for(let k=cache.length;k<=c;k++){
@@ -149,9 +155,23 @@ function todays(t){
       const prev=cache[k-1],r=rng(k*97+salt),cut=[0,Math.round(L/3),Math.round(2*L/3),L];
       cache.push([0,1,2].flatMap(s=>shuffle(prev.slice(cut[s],cut[s+1]),r)))}
     return cache[c]};
-  const ids=[];for(let n=dayNum*PER_DAY;n<dayNum*PER_DAY+PER_DAY;n++)ids.push(perm(Math.floor(n/L))[n%L]);
+  const ids=[];for(let n=start;n<start+per;n++)ids.push(perm(Math.floor(n/L))[n%L]);
   const r=rng(dayNum*131+salt);
   return ids.map(i=>withOpts(pool[i],r));
+}
+// Daily Drop: 1 Easy, 1 Medium, 2 Hard, 1 Impossible, taken from the same rotation right after
+// that day's By Difficulty set, so the two never overlap or repeat each other.
+function mainSet(){
+  const out=[];
+  for(const t of Object.keys(MAIN_MIX)){
+    const k=MAIN_MIX[t];
+    if(dayNum>=2){out.push(...todays(t,k,undefined,slotStart(t,dayNum)+PER_DAY));continue}
+    // Launch days only: separate rotation, skipping that day's By Difficulty questions.
+    const taken=new Set(todays(t).map(q=>q.id));
+    const picks=todays(t,k+PER_DAY,{e:71,m:83,h:97,x:109}[t],dayNum*(k+PER_DAY)).filter(q=>!taken.has(q.id)).slice(0,k);
+    out.push(...picks);
+  }
+  return out;
 }
 const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const keyFor=t=>`dropin3:${dayKey}:${t}`;
@@ -167,10 +187,20 @@ let S=null, view="daily";
 
 /* ---------- tabs ---------- */
 function setView(v){view=v;S=null;document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.v===v)));
-  ({daily:home,seasons:seasonsView,where:whereView,bank:bankView})[v]();window.scrollTo({top:0})}
+  ({main:mainView,daily:home,seasons:seasonsView,where:whereView,bank:bankView})[v]();window.scrollTo({top:0})}
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>setView(b.dataset.v));
 
-/* ---------- daily ---------- */
+/* ---------- daily drop ---------- */
+function mainView(){
+  const qs=mainSet(), done=store.get(keyFor("main"));
+  if(done&&done.ids&&done.ids.join()===qs.map(q=>q.id).join()){S={mode:"main",title:"Daily Drop",qs,i:0,marks:done.marks};return results()}
+  app.innerHTML=`<h2>Today's Daily Drop</h2><p class="muted">Five questions that climb in rarity, one shot each. Everyone gets the same set, and it resets at midnight your time.</p>
+   <div class="ladder">${qs.map(q=>chip(q.t)).join("")}</div>
+   <div class="row" style="margin-top:16px"><button class="btn" id="go">Drop in</button></div>
+   <p class="muted" style="margin-top:14px;font-size:14px">Want more? Each difficulty has its own five-question daily under By Difficulty.</p>`;
+  document.getElementById("go").onclick=()=>{S={mode:"main",title:"Daily Drop",qs,i:0,marks:[]};question()};
+}
+/* ---------- daily by difficulty ---------- */
 function home(){
   app.innerHTML=`<h2>Pick your drop</h2><p class="muted">Five questions a day per difficulty, one shot each. New questions at midnight your time.</p>
   <div class="diffs">${Object.keys(TIERS).map(t=>{const m=TIERS[t],done=store.get(keyFor(t));
@@ -203,20 +233,20 @@ function answer(btn){
     <p>${esc(q.e)}</p><span class="src">${esc(q.id)} · Source: ${srcLink(q.s)}</span></div>
     <div class="row" style="margin-top:12px"><button class="btn" id="next">${last?"See results":"Next question"}</button></div>`;
   const nb=document.getElementById("next");
-  nb.onclick=()=>{if(last){if(S.mode==="daily")store.set(keyFor(S.t),{marks:S.marks,ids:S.qs.map(x=>x.id)});results()}else{S.i++;question()}};
+  nb.onclick=()=>{if(last){if(S.mode==="daily")store.set(keyFor(S.t),{marks:S.marks,ids:S.qs.map(x=>x.id)});if(S.mode==="main")store.set(keyFor("main"),{marks:S.marks,ids:S.qs.map(x=>x.id)});results()}else{S.i++;question()}};
   nb.focus();
 }
 function rank(n,total){const p=n/total;return p===1?"Victory Royale!":p>=.8?"Top 2":p>=.6?"Top 10":p>=.4?"Top 25":p>0?"Landed hot":"Eliminated"}
 function results(){
   const n=S.marks.filter(Boolean).length,total=S.qs.length,grid=S.marks.map(x=>x?"🟩":"🟥").join("");
   const title=S.mode==="daily"?`${TIERS[S.t].label} (${TIERS[S.t].tier})`:S.title;
-  const share=`Drop-In Daily ${dayKey}\n${title} ${n}/${total} ${grid}`;
+  const share=`Drop-In Daily ${dayKey}\n${title} ${n}/${total}\n${grid}`;
   app.innerHTML=`<div class="hud">${S.mode==="daily"?chip(S.t):`<span class="chip c-m">${esc(S.title)}</span>`}<span class="score">${n}/${total}</span></div>
    <p class="result-title" style="color:${n===total?"var(--mythic)":"var(--ink)"}">${rank(n,total)}</p>
    <ul class="recap">${S.qs.map((q,k)=>`<li><span class="m ${S.marks[k]?"ok":"no"}">${S.marks[k]?"✓":"✗"}</span><span>${esc(q.q)} <strong>${esc(q.a)}</strong> · ${srcLink(q.s,"src","source")}</span></li>`).join("")}</ul>
    <pre class="share" id="share">${esc(share)}</pre>
-   <div class="row"><button class="btn" id="copy">Copy result</button>${S.mode!=="daily"?`<button class="btn ghost" id="again">${S.mode==="where"?"Play 10 more":"Play this set again"}</button>`:""}<button class="btn ghost" id="back">${S.mode==="daily"?"Try another difficulty":S.mode==="where"?"Back to Where Am I?":"Pick another season"}</button><span class="toast" id="toast"></span></div>`;
-  document.getElementById("back").onclick=()=>setView(S.mode==="daily"?"daily":S.mode==="where"?"where":"seasons");
+   <div class="row"><button class="btn" id="copy">Copy result</button>${S.mode!=="daily"&&S.mode!=="main"?`<button class="btn ghost" id="again">${S.mode==="where"?"Play 10 more":"Play this set again"}</button>`:""}<button class="btn ghost" id="back">${S.mode==="main"?"Play by difficulty":S.mode==="daily"?"Try another difficulty":S.mode==="where"?"Back to Where Am I?":"Pick another season"}</button><span class="toast" id="toast"></span></div>`;
+  document.getElementById("back").onclick=()=>setView(S.mode==="main"||S.mode==="daily"?"daily":S.mode==="where"?"where":"seasons");
   const again=document.getElementById("again");if(again)again.onclick=()=>S.mode==="where"?startWhere(S.size):startSeason(S.filter,S.size);
   document.getElementById("copy").onclick=()=>{const t=document.getElementById("toast");
     navigator.clipboard.writeText(share).then(()=>t.textContent="Copied").catch(()=>{const r=document.createRange();r.selectNodeContents(document.getElementById("share"));const s=getSelection();s.removeAllRanges();s.addRange(r);t.textContent="Selected; press Ctrl/Cmd+C"})};
@@ -310,7 +340,7 @@ function renderBank(){
     (list.length>bf.shown?`<li class="more"><button class="btn ghost" id="b-more">Show 60 more</button></li>`:"");
   const m=document.getElementById("b-more");if(m)m.onclick=()=>{bf.shown+=60;renderBank()};
 }
-setView("daily");
+setView("main");
 </script>
 
 </html>
