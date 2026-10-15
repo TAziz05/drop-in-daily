@@ -20,7 +20,7 @@ Tiers: `e` Easy, `m` Medium, `h` Hard, `x` Impossible. `G` = Fortnite Wiki base 
 - Don't use questions about rumors or leaks.
 
 ## Versions
-`versions.json` holds `[label, date, note]`. Major change `vX.00`, minor `vX.10`, small additions or fixes `vX.01`. The page shows the newest label and the update count.
+`versions.json` holds `[label, date, note]`. Major change `vX.00`, minor `vX.10`, small additions or fixes `vX.01` (add 0.01 to the last label: v12.29 → v12.30). The page shows the newest label and the update count.
 
 ## Publishing
 Work goes on the `not-live-till-night` branch. The "Midnight release" GitHub Action merges it into `main` at midnight Eastern.
