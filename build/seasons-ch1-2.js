@@ -46,6 +46,7 @@ const SEASONS=[
  ["x","According to Epic's Season 3 recap, how fast did the Battle Bus travel?","215 km/h",["120 km/h","300 km/h","88 km/h"],"Epic shared it in players' personalized Season 3 recap emails.","Epic Games email: Season 3 Recap Stats"],
 ]},
 {id:"C1S4",ch:"Chapter 1",name:"Season 4",sub:"Brace for Impact",page:"Season_4",qs:[
+ ["x","Which two outfit challenges were locked after Season 4 ended?","Omega and Carbide",["Drift and Ragnarok","Black Knight and Rust Lord","Midas and Meowscles"],"They're the only outfit challenges that couldn't be finished once the season was over.",G+"Omega"],
  ["e","What theme did Chapter 1 Season 4 have?","Superheroes",["Pirates","Knights","Winter"],"Its slogan was 'Brace for Impact'."],
  ["m","What did the big meteor create when it struck?","Dusty Divot",["Loot Lake","Lucky Landing","Leaky Lake"],"The largest fragment hit the Factory and Dusty Depot, leaving a crater."],
  ["m","What effect did Hop Rocks from the crater give you?","Low gravity",["Invisibility","Speed boost","Healing over time"],"Hop Rocks gave a short low-gravity effect."],
@@ -69,7 +70,6 @@ const SEASONS=[
  ["h","Which giant object came back from the real world through a rift?","The Durrr Burger head",["The Tomato head","The Pizza Pit sign","The Llama statue"],"It landed on a hill near Pleasant Park."],
  ["h","Which cosmetic type debuted with the Season 5 Battle Pass?","Toys",["Pets","Wraps","Lobby Music"],"Toys were new for Season 5."],
  ["h","Which temple-themed location was added in Season 5?","Tomato Temple",["Lucky Temple","Summit Temple","Shuffled Shrines"],"It joined Paradise Palms and Lazy Links."],
- ["x","Which two outfit challenges were locked after Season 5 ended?","Omega and Carbide",["Drift and Ragnarok","Black Knight and Rust Lord","Midas and Meowscles"],"Unlike other outfit challenges, they couldn't be finished later."],
  ["x","Why was Season 5 extended to September 26, 2018?","To reach the 1-year free-to-play anniversary",["Server problems","The World Cup","A delayed live event"],"It was scheduled to end on September 24."],
  ["x","What happened to the dirt racetrack east of Retail Row?","It became a concrete motorcourse",["It flooded","It was swallowed by a rift","It turned into a golf course"],"It was upgraded to a full-scale track."],
 ]},
