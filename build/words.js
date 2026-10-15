@@ -45,7 +45,7 @@ SEASONS.push(
 {id:"WSTATS",ch:"Loot & Lore",name:"Weapon Stats",sub:"Numbers from the Fortnitemares 2026 loot pool",url:"https://fortnite.gg/weapons",qs:[
  ["e","In October 2026's Battle Royale loot pool, which weapon had the highest DPS at 374.4?","Mega Buster",["Enhanced Assault Rifle","Marker Bonerattler SMG","Pumpkin Launcher"],"It's a Rare explosive with a 75-shot magazine.","https://fortnite.gg/weapons"],
  ["e","Which Trick or Treat launcher was in October 2026's loot pool at Legendary rarity?","Pumpkin Launcher",["Easy Ride Pumpkin Launcher","Candy Corn Cannon","Mega Buster"],"It deals 137 damage per shot.","https://fortnite.gg/weapons"],
- ["e","Whose Mythic pistol, Masterpiece, held just 1 shot in October 2026's loot pool?","Midas'",["Jules'","Oscar's","Kit's"],"It hits for 125 damage.","https://fortnite.gg/weapons"],
+ ["e","Whose Mythic pistol, Masterpiece, held just 1 shot in early October 2026, before it was vaulted?","Midas'",["Jules'","Oscar's","Kit's"],"It hits for 125 damage.","https://fortnite.gg/weapons"],
  ["m","What was the Mega Buster's magazine size after the October 2026 buff?","75",["50","60","100"],"It went from 50 to 75.","https://fortnite.gg/weapons/changes"],
  ["m","How much damage did the Rare Mega Buster deal after its October 2026 buff?","144",["120","130","160"],"It was 120 before.","https://fortnite.gg/weapons/changes"],
  ["m","How many shells did the Pump Shotgun hold in October 2026's loot pool?","5",["4","6","8"],"It hit for 95 damage at Uncommon.","https://fortnite.gg/weapons"],
@@ -61,7 +61,7 @@ SEASONS.push(
  ["h","How many rounds did the Bonerattler SMG hold in October 2026?","34",["25","30","40"],"Its fire rate went from 10.4 to 10.6.","https://fortnite.gg/weapons"],
  ["h","Which weapon class were the Dual Fiend Hunters in October 2026's loot pool?","Bows",["Pistols","SMGs","Explosives"],"They held 14 shots.","https://fortnite.gg/weapons"],
  ["h","What did the Sideways Rifle's headshot multiplier change to in October 2026?","1.6x",["1.5x","1.75x","2x"],"It was 1.5x before.","https://fortnite.gg/weapons/changes"],
- ["h","How many weapons were in the casual Battle Royale loot pool in mid-October 2026?","23",["18","27","31"],"Consumables and utility items were listed separately.","https://fortnite.gg/weapons"],
+ ["h","How many weapons were in the casual Battle Royale loot pool just before the v42.40 update in October 2026?","23",["18","27","31"],"Consumables and utility items were listed separately.","https://fortnite.gg/weapons"],
  ["x","How much damage did Frantic Rebecca's Guns deal per shot after the October 2026 change?","8",["7","9","10"],"It went up from 7, while structure damage fell from 13 to 8.","https://fortnite.gg/weapons/changes"],
  ["x","What did the Mythic Enhanced Wrecker Revolver's damage drop to in October 2026?","83",["79","86","89"],"It was 89 before the nerf.","https://fortnite.gg/weapons/changes"],
  ["x","What did the Frantic Rebecca's Guns' reload time change to in October 2026?","1.36 seconds",["1.65 seconds","1.5 seconds","1.2 seconds"],"It used to take 1.65 seconds.","https://fortnite.gg/weapons/changes"],
