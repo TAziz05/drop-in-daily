@@ -2,6 +2,10 @@
   "name": "drop-in-daily-build",
   "private": true,
   "description": "Builds index.html and the daily/ files from the question sources.",
-  "scripts": { "build": "node build-data.js && python3 build-page.py && python3 make-github.py && node gen-daily.js" },
-  "dependencies": { "jsdom": "24.1.0" }
+  "scripts": {
+    "build": "node build-data.js && node pin.js && python3 build-page.py && python3 make-github.py && node gen-daily.js"
+  },
+  "dependencies": {
+    "jsdom": "24.1.0"
+  }
 }

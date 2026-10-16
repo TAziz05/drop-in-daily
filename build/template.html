@@ -155,7 +155,11 @@ const withOpts=(x,r)=>({...x,opts:shuffle([x.a,...x.w],r)});
 // a day used 5 slots; from Oct 15 each day uses 5 for By Difficulty, then the Daily Drop's share.
 const MAIN_MIX={e:1,m:1,h:2,x:1};
 const slotStart=(t,d)=>d<=1?d*PER_DAY:2*PER_DAY+(d-2)*(PER_DAY+MAIN_MIX[t]);
+// Days that were already live when this version was published keep the exact questions they had.
+const PINNED=/*PIN*/{};
+const pinFor=dn=>PINNED[new Date(Date.UTC(2026,9,13)+dn*864e5).toISOString().slice(0,10)];
 function todays(t,per=PER_DAY,salt={e:11,m:23,h:37,x:53}[t],start=slotStart(t,dayNum),dn=dayNum){
+  {const p=pinFor(dn);if(p&&p[t]&&per===PER_DAY&&start===slotStart(t,dn))return p[t];}
   const pool=Q.filter(q=>q.t===t).sort((a,b)=>a.id<b.id?-1:1), L=pool.length, cache=[];
   // Each pass reshuffles within thirds of the previous pass's order, so a question
   // played late in one pass comes back late in the next (always days apart).
@@ -171,6 +175,7 @@ function todays(t,per=PER_DAY,salt={e:11,m:23,h:37,x:53}[t],start=slotStart(t,da
 // Daily Drop: 1 Easy, 1 Medium, 2 Hard, 1 Impossible, taken from the same rotation right after
 // that day's By Difficulty set, so the two never overlap or repeat each other.
 function mainSet(dn=dayNum){
+  {const p=pinFor(dn);if(p&&p.main)return p.main;}
   const out=[];
   for(const t of Object.keys(MAIN_MIX)){
     const k=MAIN_MIX[t];
