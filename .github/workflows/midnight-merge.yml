@@ -10,6 +10,7 @@ on:
     # makes sure only the one that lands at midnight actually merges.
     - cron: "1 4 * * *"
     - cron: "1 5 * * *"
+    - cron: "17 7 * * *"
   workflow_dispatch:   # adds a "Run workflow" button to merge right now
 
 permissions:
@@ -28,7 +29,9 @@ jobs:
         run: |
           HOUR=$(TZ=America/New_York date +%H)
           echo "Eastern hour is $HOUR"
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$HOUR" = "00" ]; then
+          # GitHub often starts scheduled runs late (sometimes hours), so accept any
+          # run between midnight and noon Eastern. Running twice is harmless.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$((10#$HOUR))" -lt 12 ]; then
             echo "go=yes" >> "$GITHUB_OUTPUT"
           else
             echo "go=no" >> "$GITHUB_OUTPUT"

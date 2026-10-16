@@ -1,0 +1,427 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drop-In Daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: one centered column on a lobby-sky backdrop; tabs switch Daily / Seasons / Bank; rarity colors encode difficulty. Single bright theme by choice. */
+:root{
+  color-scheme: light;
+  --sky-top:#1d6fe0; --sky-bot:#5fb4ff;
+  --ink:#0d1b3d; --ink-soft:#3c4d74;
+  --card:#f6f9ff; --line:#c9d6ef; --wash:#eaf2ff;
+  --yellow:#ffd53d; --yellow-ink:#3a2a00;
+  --uncommon:#3bb54a; --rare:#2f8cff; --legendary:#e8952a; --mythic:#c99a00;
+  --right:#2fa84f; --wrong:#e2453c;
+  /* Fortnite's own face (Burbank Big Condensed) is used when installed on the device; Anton is the free stand-in. */
+  --display:"Burbank Big Condensed","Burbank Big Cd Bk","BurbankBigCondensed-Black",Anton,"Arial Narrow",Impact,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --cond:"Barlow Condensed","Arial Narrow",sans-serif;
+}
+html,body{min-height:100%}
+body{background:var(--sky-top);background-image:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-bot) 70%,#a9d8ff 100%);background-attachment:fixed;
+  color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 16px;color:#fff}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(40px,10vw,64px);line-height:.95;margin:0;letter-spacing:1px;text-transform:uppercase;
+  text-shadow:0 3px 0 #0b3f8f,0 6px 14px rgba(0,30,80,.35);transform:skew(-6deg)}
+h1 span{color:var(--yellow)}
+.date{font-family:var(--cond);font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:1.5px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.shareall{margin-top:22px;padding-top:16px;border-top:2px dashed var(--line,#d3ddf0)}.sa-title{font-weight:700;margin:0 0 8px}
+.estats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0}
+.estat{background:#fff;border:2px solid var(--line,#d3ddf0);border-radius:10px;padding:10px 12px}
+.estat b{display:block;font-family:var(--display);font-size:30px;line-height:1.05}
+.estat span{font-size:13px;color:var(--muted,#4a5a7a);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.streak-fire{color:#e8932e}
+.ladder{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tab{appearance:none;border:0;cursor:pointer;font-family:var(--display);font-size:18px;letter-spacing:.8px;text-transform:uppercase;
+  padding:9px 14px;border-radius:6px;background:rgba(255,255,255,.18);color:#fff;transform:skew(-6deg)}
+.tab[aria-selected="true"]{background:var(--yellow);color:var(--yellow-ink);box-shadow:0 3px 0 #c99e12}
+.tab:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.panel{background:var(--card);border-radius:10px;box-shadow:0 6px 0 rgba(10,40,100,.25),0 12px 28px rgba(10,40,100,.2);padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel h2{font-family:var(--display);font-weight:400;font-size:28px;margin:0;text-transform:uppercase;letter-spacing:.5px;text-wrap:balance}
+.muted{color:var(--ink-soft);margin:0}
+.diffs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media (max-width:420px){.diffs{grid-template-columns:1fr}.tabs{display:grid;grid-template-columns:1fr 1fr}.tab{font-size:15px;padding:8px 6px;text-align:center}.tab:first-child{grid-column:1/-1}.tab:last-child:nth-child(even){grid-column:1/-1}}
+.diff{appearance:none;border:0;cursor:pointer;border-radius:8px;padding:14px 12px;text-align:left;color:#fff;font-family:var(--body);display:flex;flex-direction:column;gap:4px;min-width:0;transition:transform .12s}
+.diff:hover{transform:translateY(-2px)} .diff:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.diff .lvl{font-family:var(--display);font-size:26px;line-height:1;text-transform:uppercase;letter-spacing:.6px}
+.diff .tier{font-family:var(--cond);font-weight:700;text-transform:uppercase;letter-spacing:1.4px;font-size:12px;opacity:.95}
+.diff .who{font-size:13.5px;line-height:1.3}
+.diff .done{font-family:var(--cond);font-weight:700;font-size:13px;background:rgba(0,0,0,.22);border-radius:4px;padding:2px 6px;align-self:flex-start;margin-top:4px}
+.d-e{background:linear-gradient(160deg,#55cf5f,var(--uncommon) 55%,#22862f)}
+.d-m{background:linear-gradient(160deg,#59a8ff,var(--rare) 55%,#1a5fc4)}
+.d-h{background:linear-gradient(160deg,#ffbd52,var(--legendary) 55%,#b8661a)}
+.d-x{background:linear-gradient(160deg,#fff2a0,#f2c200 45%,#a87a00);color:#2b1f00}
+.hud{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.chip{font-family:var(--cond);font-weight:700;text-transform:uppercase;letter-spacing:1.3px;font-size:13px;color:#fff;border-radius:4px;padding:3px 8px;white-space:nowrap}
+.c-e{background:var(--uncommon)} .c-m{background:var(--rare)} .c-h{background:var(--legendary)} .c-x{background:var(--mythic);color:#241a00}
+.era{font-family:var(--cond);font-weight:600;font-size:14px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-soft)}
+.pips{display:flex;gap:5px;flex-wrap:wrap}
+.pip{width:18px;height:8px;border-radius:2px;background:var(--line)}
+.pip.cur{background:var(--ink)} .pip.ok{background:var(--right)} .pip.no{background:var(--wrong)}
+.q{font-size:20px;font-weight:700;line-height:1.3;margin:0;text-wrap:balance}
+.opts{display:grid;gap:8px}
+.opt{appearance:none;font:inherit;font-weight:600;text-align:left;cursor:pointer;background:#fff;color:var(--ink);border:2px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;gap:12px;align-items:center;transition:border-color .12s,background .12s}
+.opt:hover:not(:disabled){border-color:var(--rare)} .opt:focus-visible{outline:3px solid var(--yellow);outline-offset:1px}
+.opt .k{font-family:var(--cond);font-weight:700;width:24px;height:24px;flex:none;display:grid;place-items:center;border-radius:4px;background:var(--line);font-size:14px}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--right);background:#e6f6ea} .opt.right .k{background:var(--right);color:#fff}
+.opt.wrong{border-color:var(--wrong);background:#fdeceb} .opt.wrong .k{background:var(--wrong);color:#fff}
+.opt.dim{opacity:.55}
+.explain{border-left:4px solid var(--rare);background:var(--wash);border-radius:0 6px 6px 0;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.explain p{margin:0}
+.verdict{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:.6px}
+.src{font-family:var(--cond);font-weight:600;font-size:14px;color:var(--ink-soft)} .src a{color:#1a5fc4}
+.btn{appearance:none;border:0;cursor:pointer;font-family:var(--display);font-size:20px;letter-spacing:.8px;text-transform:uppercase;background:var(--yellow);color:var(--yellow-ink);border-radius:8px;padding:11px 18px;box-shadow:0 4px 0 #c99e12;transition:transform .08s}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #c99e12} .btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.result-title{font-family:var(--display);font-size:clamp(32px,8vw,46px);line-height:1;margin:0;text-transform:uppercase;transform:skew(-6deg);transform-origin:left}
+.score{font-family:var(--cond);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
+.recap{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.recap li{display:flex;gap:10px;align-items:baseline;font-size:15px}
+.recap .m{font-weight:700;flex:none;width:18px} .recap .ok{color:var(--right)} .recap .no{color:var(--wrong)}
+.share{font-family:var(--cond);font-size:16px;background:#fff;border:2px dashed var(--line);border-radius:6px;padding:10px 12px;white-space:pre-wrap;margin:0;user-select:all}
+.toast{font-family:var(--cond);font-weight:600;color:var(--right)}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 150px}
+.field label{font-family:var(--cond);font-weight:700;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-soft)}
+select,input[type=search]{font:inherit;font-size:15px;color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0;width:100%}
+select:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline-offset:1px}
+.season-card{background:var(--wash);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.season-card .sub{font-family:var(--display);font-size:24px;text-transform:uppercase;letter-spacing:.5px;line-height:1.05}
+.counts{display:flex;gap:6px;flex-wrap:wrap}
+.bank{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.bq{border:2px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:#fff;min-width:0}
+.bq .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bq .id{font-family:var(--cond);font-weight:700;font-size:13px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.bq .qq{font-weight:700;margin:0}
+.bq .ans{margin:0;color:var(--right);font-weight:700}
+.bq .oth{margin:0;font-size:14px;color:var(--ink-soft)}
+.bq .ex{margin:0;font-size:14.5px}
+.more{align-self:center}
+.clue-head{font-family:var(--display);font-size:24px;text-transform:uppercase;letter-spacing:.8px;line-height:1;display:flex;align-items:center;gap:8px}
+.clue-head svg{flex:none}
+.clue{margin:0;background:#fffbe6;border:2px dashed #e5c84a;border-radius:8px;padding:12px 14px;font-size:18px;font-weight:600;line-height:1.4}
+.c-loc{background:var(--ink)}
+.ver{margin:0 auto 10px;max-width:520px;font-size:13px}
+.ver span{font-family:var(--cond);font-weight:700;letter-spacing:.5px;display:inline-block;padding:4px 10px;border-radius:6px;background:rgba(13,27,61,.25)}
+.ver ol{list-style:none;padding:10px 12px;margin:8px 0 0;text-align:left;background:rgba(13,27,61,.3);border-radius:8px;max-height:260px;overflow:auto}
+.ver li{padding:3px 0;line-height:1.35}.ver li b{display:inline-block;min-width:54px}.ver li span{opacity:.75;margin-right:6px}
+.credit{display:inline-block;font-size:13px;opacity:.85;margin-bottom:8px}
+.creator{display:inline-block;font-family:var(--cond);font-weight:600;font-size:16px;letter-spacing:.4px;background:rgba(13,27,61,.35);border-radius:6px;padding:6px 10px}
+footer{color:#fff;font-size:13px;text-align:center;text-shadow:0 1px 2px rgba(0,30,80,.4)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Drop-In <span>Daily</span></h1>
+    <div class="date" id="date"></div>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Game modes">
+    <button class="tab" role="tab" id="tab-main" data-v="main">Daily Drop</button>
+    <button class="tab" role="tab" id="tab-daily" data-v="daily">By Difficulty</button>
+    <button class="tab" role="tab" id="tab-seasons" data-v="seasons">Chapters &amp; Seasons</button>
+    <button class="tab" role="tab" id="tab-where" data-v="where">Where Am I?</button>
+    <button class="tab" role="tab" id="tab-endless" data-v="endless">Endless</button>
+    <button class="tab" role="tab" id="tab-bank" data-v="bank">Question Bank</button>
+  </nav>
+  <main id="app" class="panel" aria-live="polite"></main>
+  <footer>Lore comes from the Fortnite Wiki (fortnite.weirdgloop.org); general and real-world trivia comes from Wikipedia. Every answer links its source; a few stats come from Epic Games&rsquo; own recap emails.<br><br>Drop-In Daily is an unofficial fan game. Portions of the materials used are trademarks and/or copyrighted works of Epic Games, Inc. All rights reserved by Epic. This material is not official and is not endorsed by Epic.<br><br><!--VERSION--><span class="credit">Coded with Claude (Opus 5.5) by Anthropic</span><br><span class="creator">Use Creator Code &ldquo;<strong>TAziz</strong>&rdquo; in the Fortnite Item Shop #EpicPartner</span></footer>
+</div>
+
+<script>
+const DATA=/*DATA*/null;
+const Q=DATA.questions, SEASONS=DATA.seasons, SBY=Object.fromEntries(SEASONS.map(s=>[s.id,s]));
+const TIERS={e:{label:"Easy",tier:"Uncommon",who:"For the every-now-and-then player",key:"easy"},
+ m:{label:"Medium",tier:"Rare",who:"For the weekly squad regular",key:"medium"},
+ h:{label:"Hard",tier:"Legendary",who:"For the every-day player",key:"hard"},
+ x:{label:"Impossible",tier:"Mythic",who:"For the ones who read the wiki for fun",key:"mythic"}};
+const PER_DAY=5, CHAPTERS=[...new Set(SEASONS.map(s=>s.ch))];
+
+const now=window.__NOW||new Date();
+const dayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+// Day 0 is launch day (Oct 13, 2026); every later day picks up where the last one stopped.
+const dayNum=Math.abs(Math.floor((Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())-Date.UTC(2026,9,13))/864e5));
+document.getElementById("date").textContent=now.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function shuffle(arr,r=Math.random){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const withOpts=(x,r)=>({...x,opts:shuffle([x.a,...x.w],r)});
+// Each tier has one rotation shared by By Difficulty and the Daily Drop. Through Oct 14, 2026
+// a day used 5 slots; from Oct 15 each day uses 5 for By Difficulty, then the Daily Drop's share.
+const MAIN_MIX={e:1,m:1,h:2,x:1};
+const slotStart=(t,d)=>d<=1?d*PER_DAY:2*PER_DAY+(d-2)*(PER_DAY+MAIN_MIX[t]);
+function todays(t,per=PER_DAY,salt={e:11,m:23,h:37,x:53}[t],start=slotStart(t,dayNum),dn=dayNum){
+  const pool=Q.filter(q=>q.t===t).sort((a,b)=>a.id<b.id?-1:1), L=pool.length, cache=[];
+  // Each pass reshuffles within thirds of the previous pass's order, so a question
+  // played late in one pass comes back late in the next (always days apart).
+  const perm=c=>{for(let k=cache.length;k<=c;k++){
+      if(k===0){cache.push(shuffle(pool.map((_,i)=>i),rng(salt)));continue}
+      const prev=cache[k-1],r=rng(k*97+salt),cut=[0,Math.round(L/3),Math.round(2*L/3),L];
+      cache.push([0,1,2].flatMap(s=>shuffle(prev.slice(cut[s],cut[s+1]),r)))}
+    return cache[c]};
+  const ids=[];for(let n=start;n<start+per;n++)ids.push(perm(Math.floor(n/L))[n%L]);
+  const r=rng(dn*131+salt);
+  return ids.map(i=>withOpts(pool[i],r));
+}
+// Daily Drop: 1 Easy, 1 Medium, 2 Hard, 1 Impossible, taken from the same rotation right after
+// that day's By Difficulty set, so the two never overlap or repeat each other.
+function mainSet(dn=dayNum){
+  const out=[];
+  for(const t of Object.keys(MAIN_MIX)){
+    const k=MAIN_MIX[t];
+    if(dn>=2){out.push(...todays(t,k,undefined,slotStart(t,dn)+PER_DAY,dn));continue}
+    // Launch days only: separate rotation, skipping that day's By Difficulty questions.
+    const taken=new Set(todays(t,PER_DAY,undefined,slotStart(t,dn),dn).map(q=>q.id));
+    const picks=todays(t,k+PER_DAY,{e:71,m:83,h:97,x:109}[t],dn*(k+PER_DAY),dn).filter(q=>!taken.has(q.id)).slice(0,k);
+    out.push(...picks);
+  }
+  return out;
+}
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const keyFor=t=>`dropin3:${dayKey}:${t}`;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const eraLabel=id=>{const s=SBY[id];if(!s)return"";return s.ch==="Fortnite OG"?"Fortnite OG":`${s.ch} · ${s.name} · ${s.sub}`};
+const srcLink=(u,cls,txt)=>/^https?:/.test(u)?`<a${cls?` class="${cls}"`:""} href="${u}" target="_blank" rel="noopener">${esc(txt||srcLabel(u))}</a>`:`<span${cls?` class="${cls}"`:""}>${esc(u)}</span>`;
+const srcLabel=u=>u.includes("fortnite.gg")?"Fortnite.GG – "+u.replace(/^https:\/\/fortnite\.gg\//,"").replace(/\//g," "):(u.includes("wikipedia")?"Wikipedia":"Fortnite Wiki")+" – "+decodeURIComponent(u.split("/").pop()).replace(/_/g," ");
+// Hide the season label when it would give the answer away: the answer is itself a season or
+// chapter, or the answer shares a word with the label that none of the wrong options share.
+const STOPW=new Set("the a an of and in on to for with at by from is was this season chapter".split(" "));
+const wordsOf=x=>String(x).toLowerCase().replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(w=>w.length>2&&!STOPW.has(w));
+function tagLeaks(q){const s=SBY[q.era];if(!s)return false;
+  if(/\b(Season|Chapter)\b/.test(q.a))return true;
+  const lab=wordsOf(s.ch+" "+s.name+" "+s.sub),ov=wordsOf(q.a).filter(w=>lab.includes(w));
+  return ov.length>0&&!q.w.some(w=>wordsOf(w).some(x=>ov.includes(x)));}
+const chip=t=>`<span class="chip c-${t}">${TIERS[t].tier} · ${TIERS[t].label}</span>`;
+
+const app=document.getElementById("app");
+const PIN=`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" fill="#e2453c"/></svg>`;
+let S=null, view="daily";
+
+/* ---------- tabs ---------- */
+function setView(v){view=v;S=null;document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.v===v)));
+  ({main:mainView,daily:home,seasons:seasonsView,where:whereView,endless:endlessView,bank:bankView})[v]();window.scrollTo({top:0})}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>setView(b.dataset.v));
+
+/* ---------- daily drop ---------- */
+function mainView(){
+  const qs=mainSet(), done=store.get(keyFor("main"));
+  if(done&&done.ids&&done.ids.join()===qs.map(q=>q.id).join()){S={mode:"main",title:"Daily Drop",qs,i:0,marks:done.marks};return results()}
+  app.innerHTML=`<h2>Today's Daily Drop</h2><p class="muted">Five questions that climb in rarity, one shot each. Everyone gets the same set, and it resets at midnight your time.</p>
+   <div class="ladder">${qs.map(q=>chip(q.t)).join("")}</div>
+   <div class="row" style="margin-top:16px"><button class="btn" id="go">Drop in</button></div>
+   <p class="muted" style="margin-top:14px;font-size:14px">Want more? Each difficulty has its own five-question daily under By Difficulty.</p>`;
+  document.getElementById("go").onclick=()=>{S={mode:"main",title:"Daily Drop",qs,i:0,marks:[]};question()};
+}
+/* ---------- daily by difficulty ---------- */
+function home(){
+  app.innerHTML=`<h2>Pick your drop</h2><p class="muted">Five questions a day per difficulty, one shot each. New questions at midnight your time.</p>
+  <div class="diffs">${Object.keys(TIERS).map(t=>{const m=TIERS[t],done=store.get(keyFor(t));
+   return `<button class="diff d-${t}" id="pick-${t}" data-t="${t}"><span class="tier">${m.tier}</span><span class="lvl">${m.label}</span><span class="who">${m.who}</span><span class="who">${Q.filter(q=>q.t===t).length} questions in rotation</span>${done?`<span class="done">Played today · ${done.marks.filter(Boolean).length}/${PER_DAY}</span>`:""}</button>`}).join("")}</div>`;
+  app.insertAdjacentHTML("beforeend",shareAllBlock());wireShareAll();
+  app.querySelectorAll(".diff").forEach(b=>b.onclick=()=>startDaily(b.dataset.t));
+}
+function startDaily(t){
+  const done=store.get(keyFor(t));
+  S={mode:"daily",t,qs:todays(t),i:0,marks:[]};
+  if(done&&done.ids&&done.ids.join()===S.qs.map(q=>q.id).join()){S.marks=done.marks;return results()}
+  question();
+}
+/* ---------- shared play loop ---------- */
+function hud(){const label=S.mode==="daily"?chip(S.t):`<span class="chip c-m">${esc(S.title)}</span>`;
+  return `<div class="hud">${label}<div class="pips" aria-label="Question ${S.i+1} of ${S.qs.length}">${S.qs.map((_,k)=>`<span class="pip ${k<S.marks.length?(S.marks[k]?"ok":"no"):k===S.i?"cur":""}"></span>`).join("")}</div></div>`}
+function question(){
+  const q=S.qs[S.i];
+  app.innerHTML=hud()+(q.era&&!tagLeaks(q)?`<span class="era">${esc(eraLabel(q.era))}</span>`:"")+
+   (S.mode!=="daily"?`<div>${chip(q.t)}</div>`:"")+
+   (q.clue?`<span class="clue-head">${PIN}Where am I?</span><p class="clue">${esc(q.q)}</p>`:`<p class="q">${esc(q.q)}</p>`)+`<div class="opts">${q.opts.map((o,k)=>`<button class="opt" id="opt-${k}" data-o="${esc(o)}"><span class="k">${"ABCD"[k]}</span><span>${esc(o)}</span></button>`).join("")}</div><div id="after"></div>`;
+  app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(b));
+}
+function answer(btn){
+  const q=S.qs[S.i], ok=btn.dataset.o===q.a;S.marks.push(ok);
+  app.querySelectorAll(".opt").forEach(b=>{b.disabled=true;if(b.dataset.o===q.a)b.classList.add("right");else if(b===btn)b.classList.add("wrong");else b.classList.add("dim")});
+  app.querySelector(".hud").outerHTML=hud();
+  const last=S.i===S.qs.length-1;
+  document.getElementById("after").innerHTML=`<div class="explain" style="border-color:${ok?"var(--right)":"var(--wrong)"}">
+    <span class="verdict" style="color:${ok?"var(--right)":"var(--wrong)"}">${ok?"Hit!":"Missed."}</span>
+    <p>${esc(q.e)}</p><span class="src">${esc(q.id)} · Source: ${srcLink(q.s)}</span></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="next">${last?"See results":"Next question"}</button></div>`;
+  const nb=document.getElementById("next");
+  nb.onclick=()=>{if(last){if(S.mode==="daily")store.set(keyFor(S.t),{marks:S.marks,ids:S.qs.map(x=>x.id)});if(S.mode==="main")store.set(keyFor("main"),{marks:S.marks,ids:S.qs.map(x=>x.id)});if(S.mode==="main"&&window.dropinDone)try{window.dropinDone(S.marks,S.qs.map(x=>x.id))}catch(e){}results()}else{S.i++;question()}};
+  nb.focus();
+}
+function rank(n,total){const p=n/total;return p===1?"Victory Royale!":p>=.8?"Top 2":p>=.6?"Top 10":p>=.4?"Top 25":p>0?"Landed hot":"Eliminated"}
+// Everything played today, in order: Daily Drop, then Easy, Medium, Hard, Impossible.
+function shareAllText(){
+  const rows=[["main","Daily Drop"],...Object.keys(TIERS).map(t=>[t,`${TIERS[t].label} (${TIERS[t].tier})`])]
+    .map(([k,label])=>{const d=store.get(keyFor(k));if(!d||!d.marks)return null;
+      return {label,n:d.marks.filter(Boolean).length,total:d.marks.length,grid:d.marks.map(x=>x?"🟩":"🟥").join("")}}).filter(Boolean);
+  if(rows.length<2)return null;
+  const n=rows.reduce((a,r)=>a+r.n,0),t=rows.reduce((a,r)=>a+r.total,0);
+  return `Drop-In Daily ${dayKey}\n`+rows.map(r=>`${r.label} ${r.n}/${r.total}\n${r.grid}`).join("\n")+`\nTotal ${n}/${t}`;
+}
+function copyText(text,toastId,fallbackEl){const t=document.getElementById(toastId);
+  navigator.clipboard.writeText(text).then(()=>t.textContent="Copied").catch(()=>{if(fallbackEl){const r=document.createRange();r.selectNodeContents(fallbackEl);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);t.textContent="Selected; press Ctrl/Cmd+C"}else t.textContent="Couldn't copy"})}
+function shareAllBlock(){const txt=shareAllText();if(!txt)return "";
+  const played=(txt.split("\n").length-2)/2===5;
+  return `<div class="shareall"><p class="sa-title">${played?"All five done today!":"Share everything you've played today"}</p><pre class="share" id="share-all">${esc(txt)}</pre>
+   <div class="row"><button class="btn" id="copy-all">Share all results</button><span class="toast" id="toast-all"></span></div></div>`}
+function wireShareAll(){const b=document.getElementById("copy-all");if(b)b.onclick=()=>copyText(shareAllText(),"toast-all",document.getElementById("share-all"))}
+function results(){
+  const n=S.marks.filter(Boolean).length,total=S.qs.length,grid=S.marks.map(x=>x?"🟩":"🟥").join("");
+  const title=S.mode==="daily"?`${TIERS[S.t].label} (${TIERS[S.t].tier})`:S.title;
+  const share=`Drop-In Daily ${dayKey}\n${title} ${n}/${total}\n${grid}`;
+  app.innerHTML=`<div class="hud">${S.mode==="daily"?chip(S.t):`<span class="chip c-m">${esc(S.title)}</span>`}<span class="score">${n}/${total}</span></div>
+   <p class="result-title" style="color:${n===total?"var(--mythic)":"var(--ink)"}">${rank(n,total)}</p>
+   <ul class="recap">${S.qs.map((q,k)=>`<li><span class="m ${S.marks[k]?"ok":"no"}">${S.marks[k]?"✓":"✗"}</span><span>${esc(q.q)} <strong>${esc(q.a)}</strong> · ${srcLink(q.s,"src","source")}</span></li>`).join("")}</ul>
+   <pre class="share" id="share">${esc(share)}</pre>
+   <div class="row"><button class="btn" id="copy">Copy result</button>${S.mode!=="daily"&&S.mode!=="main"?`<button class="btn ghost" id="again">${S.mode==="where"?"Play 10 more":"Play this set again"}</button>`:""}<button class="btn ghost" id="back">${S.mode==="main"?"Play by difficulty":S.mode==="daily"?"Try another difficulty":S.mode==="where"?"Back to Where Am I?":"Pick another season"}</button><span class="toast" id="toast"></span></div>${S.mode==="daily"||S.mode==="main"?shareAllBlock():""}`;
+  wireShareAll();
+  document.getElementById("back").onclick=()=>setView(S.mode==="main"||S.mode==="daily"?"daily":S.mode==="where"?"where":"seasons");
+  const again=document.getElementById("again");if(again)again.onclick=()=>S.mode==="where"?startWhere(S.size):startSeason(S.filter,S.size);
+  document.getElementById("copy").onclick=()=>{const t=document.getElementById("toast");
+    navigator.clipboard.writeText(share).then(()=>t.textContent="Copied").catch(()=>{const r=document.createRange();r.selectNodeContents(document.getElementById("share"));const s=getSelection();s.removeAllRanges();s.addRange(r);t.textContent="Selected; press Ctrl/Cmd+C"})};
+}
+
+/* ---------- chapters & seasons ---------- */
+let pick={ch:"Chapter 1",s:"C1S1"};
+try{const p=JSON.parse(localStorage.getItem("dropin:pick"));if(p&&p.ch)pick=p}catch(e){}
+const inSet=(q,f)=>f.s!=="all"?q.era===f.s:(f.ch==="all"?!!q.era:!!q.era&&SBY[q.era].ch===f.ch);
+function seasonOptions(ch,sel,allLabel){const list=SEASONS.filter(s=>ch==="all"||s.ch===ch);
+  return `<option value="all"${sel==="all"?" selected":""}>${allLabel}</option>`+list.map(s=>`<option value="${s.id}"${s.id===sel?" selected":""}>${esc(s.ch==="Fortnite OG"?"OG mode":(ch==="all"?s.ch+" · ":"")+s.name+" – "+s.sub)}</option>`).join("")}
+function chapterOptions(sel,allLabel){return `<option value="all"${sel==="all"?" selected":""}>${allLabel}</option>`+CHAPTERS.map(c=>`<option${c===sel?" selected":""}>${esc(c)}</option>`).join("")}
+const allLbl=c=>c==="all"?"Every season":c==="Game Modes"?"Every mode":c==="Events & Gameplay"?"Every event":c==="Loot & Lore"?"Every topic":"Every season in this chapter";
+function seasonsView(){
+  app.innerHTML=`<h2>Chapters &amp; Seasons</h2><p class="muted">Pick a chapter and season, or a game mode like Save the World or LEGO Fortnite, to play its questions. These questions also turn up in the Daily game.</p>
+  <div class="row"><div class="field"><label for="ch-sel">Chapter</label><select id="ch-sel">${chapterOptions(pick.ch,"All chapters")}</select></div>
+  <div class="field"><label for="s-sel">Season</label><select id="s-sel">${seasonOptions(pick.ch,pick.s,allLbl(pick.ch))}</select></div></div>
+  <div id="s-info"></div>`;
+  const ch=document.getElementById("ch-sel"),ss=document.getElementById("s-sel");
+  ch.onchange=()=>{pick={ch:ch.value,s:"all"};ss.innerHTML=seasonOptions(pick.ch,"all",allLbl(pick.ch));info()};
+  ss.onchange=()=>{pick.s=ss.value;info()};
+  info();
+}
+function info(){
+  try{localStorage.setItem("dropin:pick",JSON.stringify(pick))}catch(e){}
+  const set=Q.filter(q=>inSet(q,pick)),s=SBY[pick.s];
+  const counts=Object.keys(TIERS).map(t=>{const n=set.filter(q=>q.t===t).length;return n?`<span class="chip c-${t}">${n} ${TIERS[t].label}</span>`:""}).join("");
+  document.getElementById("s-info").innerHTML=`<div class="season-card">
+   ${s?`<span class="era">${esc(s.ch==="Fortnite OG"?"Fortnite OG":s.ch+" · "+s.name)}</span><span class="sub">${esc(s.sub)}</span><span class="src"><a href="${s.url}" target="_blank" rel="noopener">${s.ch==="Events & Gameplay"?"Event":s.ch==="Loot & Lore"?"Topic":s.ch==="Game Modes"?"Mode":"Season"} page on the Fortnite Wiki</a></span>`
+     :`<span class="sub">${esc(pick.ch==="all"?"Every chapter":pick.ch)}</span>`}
+   <span class="muted">${set.length} questions</span><div class="counts">${counts}</div></div>
+   <div class="row"><button class="btn" id="play10"${set.length?"":" disabled"}>Play ${Math.min(10,set.length)}</button>${set.length>10&&set.length<=40?`<button class="btn ghost" id="playall">Play all ${set.length}</button>`:""}</div>`;
+  document.getElementById("play10").onclick=()=>startSeason({...pick},10);
+  const pa=document.getElementById("playall");if(pa)pa.onclick=()=>startSeason({...pick},set.length);
+}
+function startSeason(f,size){
+  const s=SBY[f.s],set=Q.filter(q=>inSet(q,f));
+  const title=s?(s.ch==="Fortnite OG"?"Fortnite OG":`${s.ch.replace("Chapter ","Ch ")} ${s.name}`):(f.ch==="all"?"All seasons":f.ch);
+  S={mode:"season",filter:f,size,title,qs:shuffle(set).slice(0,size).map(q=>withOpts(q)),i:0,marks:[]};
+  question();
+}
+
+/* ---------- where am I? ---------- */
+const LOCQ=Q.filter(q=>q.kind==="loc");
+function whereView(){
+  const clues=LOCQ.filter(q=>q.clue).length;
+  app.innerHTML=`<span class="clue-head">${PIN}Where am I?</span>
+  <p class="muted">Each round gives you clues written by a named location, from the original 2017 map to the Chapter 7 island. Name the place, or say when it first showed up. These also turn up in the Daily game.</p>
+  <div class="season-card"><span class="sub">${clues} location and landmark clues</span><span class="muted">Plus ${LOCQ.length-clues} trivia questions about places, like when they arrived or what replaced them</span>
+  <div class="counts">${Object.keys(TIERS).map(t=>{const n=LOCQ.filter(q=>q.t===t).length;return n?`<span class="chip c-${t}">${n} ${TIERS[t].label}</span>`:""}).join("")}</div></div>
+  <div class="row"><button class="btn" id="where10">Play 10</button></div>`;
+  document.getElementById("where10").onclick=()=>startWhere(10);
+}
+/* ---------- endless ---------- */
+const EKEY="dropin:endless";
+const eStats=()=>Object.assign({best:0,right:0,total:0},store.get(EKEY)||{});
+let eTier="all";
+function endlessView(){
+  const st=eStats();
+  app.innerHTML=`<h2>Endless</h2><p class="muted">Questions keep coming until you stop. Build a streak; one miss resets it. Nothing repeats until you've seen every question in your pick.</p>
+   <div class="estats"><div class="estat"><span>Best streak</span><b>${st.best}</b></div><div class="estat"><span>All-time</span><b>${st.right}/${st.total}</b></div><div class="estat"><span>Accuracy</span><b>${st.total?Math.round(100*st.right/st.total)+"%":"–"}</b></div></div>
+   <div class="field"><label for="e-tier">Difficulty</label><select id="e-tier"><option value="all">Mixed (every difficulty)</option>${Object.keys(TIERS).map(t=>`<option value="${t}"${eTier===t?" selected":""}>${TIERS[t].label} (${TIERS[t].tier})</option>`).join("")}</select></div>
+   <div class="row" style="margin-top:14px"><button class="btn" id="e-go">Start</button>${st.total?`<button class="btn ghost" id="e-reset">Reset stats</button>`:""}</div>`;
+  const sel=document.getElementById("e-tier");sel.value=eTier;sel.onchange=()=>eTier=sel.value;
+  document.getElementById("e-go").onclick=()=>{const pool=Q.filter(q=>eTier==="all"||q.t===eTier);
+    S={mode:"endless",pool,deck:shuffle(pool),i:0,streak:0,right:0,total:0,best:eStats().best};endlessQ()};
+  const r=document.getElementById("e-reset");if(r)r.onclick=()=>{if(confirm("Reset your Endless stats?")){store.set(EKEY,{best:0,right:0,total:0});endlessView()}};
+}
+function endlessHud(){return `<div class="hud"><span class="chip c-m">Endless</span><span class="score">${S.streak>=3?`<span class="streak-fire">🔥 </span>`:""}Streak ${S.streak} · ${S.right}/${S.total}</span></div>`}
+function endlessQ(){
+  if(S.i>=S.deck.length){S.deck=shuffle(S.pool);S.i=0}
+  const q=withOpts(S.deck[S.i]);S.cur=q;
+  app.innerHTML=endlessHud()+(q.era&&!tagLeaks(q)?`<span class="era">${esc(eraLabel(q.era))}</span>`:"")+`<div>${chip(q.t)}</div>`+
+   (q.clue?`<span class="clue-head">${PIN}Where am I?</span><p class="clue">${esc(q.q)}</p>`:`<p class="q">${esc(q.q)}</p>`)+
+   `<div class="opts">${q.opts.map((o,k)=>`<button class="opt" data-o="${esc(o)}"><span class="k">${"ABCD"[k]}</span><span>${esc(o)}</span></button>`).join("")}</div><div id="after"></div>`;
+  app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>endlessAnswer(b));
+}
+function endlessAnswer(btn){
+  const q=S.cur,ok=btn.dataset.o===q.a;
+  app.querySelectorAll(".opt").forEach(b=>{b.disabled=true;if(b.dataset.o===q.a)b.classList.add("right");else if(b===btn)b.classList.add("wrong");else b.classList.add("dim")});
+  const lost=S.streak;S.total++;if(ok){S.right++;S.streak++}else S.streak=0;S.i++;
+  const st=eStats();st.total++;if(ok)st.right++;const newBest=S.streak>st.best;if(newBest)st.best=S.streak;store.set(EKEY,st);
+  app.querySelector(".hud").outerHTML=endlessHud();
+  document.getElementById("after").innerHTML=`<div class="explain" style="border-color:${ok?"var(--right)":"var(--wrong)"}">
+    <span class="verdict" style="color:${ok?"var(--right)":"var(--wrong)"}">${ok?(newBest&&S.streak>1?"New best streak!":"Hit!"):(lost>=3?`Streak over at ${lost}.`:"Missed.")}</span>
+    <p>${esc(q.e)}</p><span class="src">${esc(q.id)} · Source: ${srcLink(q.s)}</span></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="next">Next question</button><button class="btn ghost" id="stop">Stop</button></div>`;
+  const nb=document.getElementById("next");nb.onclick=endlessQ;nb.focus();
+  document.getElementById("stop").onclick=endlessEnd;
+}
+function endlessEnd(){
+  const st=eStats(),share=`Drop-In Daily Endless\n${S.right}/${S.total} right · best streak ${st.best}`;
+  app.innerHTML=`<div class="hud"><span class="chip c-m">Endless</span><span class="score">${S.right}/${S.total}</span></div>
+   <p class="result-title">${S.total?Math.round(100*S.right/S.total):0}% this run</p>
+   <div class="estats"><div class="estat"><span>This run</span><b>${S.right}/${S.total}</b></div><div class="estat"><span>Best streak</span><b>${st.best}</b></div><div class="estat"><span>All-time</span><b>${st.right}/${st.total}</b></div></div>
+   <pre class="share" id="share">${esc(share)}</pre>
+   <div class="row"><button class="btn" id="copy">Copy result</button><button class="btn ghost" id="again">Keep going</button><button class="btn ghost" id="back">Back</button><span class="toast" id="toast"></span></div>`;
+  document.getElementById("copy").onclick=()=>copyText(share,"toast",document.getElementById("share"));
+  document.getElementById("again").onclick=endlessQ;
+  document.getElementById("back").onclick=()=>setView("endless");
+}
+function startWhere(size){S={mode:"where",size,title:"Where Am I?",qs:shuffle(LOCQ).slice(0,size).map(q=>withOpts(q)),i:0,marks:[]};question()}
+
+/* ---------- question bank ---------- */
+let bf={text:"",t:"all",ch:"all",s:"all",src:"all",kind:"all",shown:60};
+function bankView(){
+  app.innerHTML=`<h2>Question Bank</h2><p class="muted">Every question with its answer, the other options, and its source, for checking by hand. Use the ID (like C2S4-03) to point out one that needs fixing.</p>
+  <div class="row"><div class="field" style="flex-basis:100%"><label for="b-text">Search</label><input type="search" id="b-text" placeholder="Search questions, answers or IDs" value="${esc(bf.text)}"></div></div>
+  <div class="row">
+   <div class="field"><label for="b-tier">Difficulty</label><select id="b-tier"><option value="all">All</option>${Object.keys(TIERS).map(t=>`<option value="${t}"${bf.t===t?" selected":""}>${TIERS[t].label} (${TIERS[t].tier})</option>`).join("")}</select></div>
+   <div class="field"><label for="b-ch">Chapter</label><select id="b-ch">${chapterOptions(bf.ch,"All")}<option value="none"${bf.ch==="none"?" selected":""}>General (no season)</option></select></div>
+   <div class="field"><label for="b-s">Season</label><select id="b-s"${bf.ch==="all"||bf.ch==="none"?" disabled":""}>${seasonOptions(bf.ch==="none"?"all":bf.ch,bf.s,"All")}</select></div>
+   <div class="field"><label for="b-kind">Type</label><select id="b-kind"><option value="all">All</option><option value="trivia"${bf.kind==="trivia"?" selected":""}>Trivia</option><option value="loc"${bf.kind==="loc"?" selected":""}>Where Am I?</option></select></div>
+   <div class="field"><label for="b-src">Source</label><select id="b-src"><option value="all">All</option><option value="g"${bf.src==="g"?" selected":""}>Fortnite Wiki</option><option value="w"${bf.src==="w"?" selected":""}>Wikipedia</option><option value="e"${bf.src==="e"?" selected":""}>Epic Games</option></select></div>
+  </div><p class="muted" id="b-count"></p><ul class="bank" id="b-list"></ul>`;
+  const t=document.getElementById("b-text");let timer;
+  t.oninput=()=>{clearTimeout(timer);timer=setTimeout(()=>{bf.text=t.value;bf.shown=60;renderBank()},150)};
+  document.getElementById("b-tier").onchange=e=>{bf.t=e.target.value;bf.shown=60;renderBank()};
+  document.getElementById("b-ch").onchange=e=>{bf.ch=e.target.value;bf.s="all";bf.shown=60;const s=document.getElementById("b-s");
+    s.innerHTML=seasonOptions(bf.ch==="none"?"all":bf.ch,"all","All");s.disabled=bf.ch==="all"||bf.ch==="none";renderBank()};
+  document.getElementById("b-s").onchange=e=>{bf.s=e.target.value;bf.shown=60;renderBank()};
+  document.getElementById("b-src").onchange=e=>{bf.src=e.target.value;bf.shown=60;renderBank()};
+  document.getElementById("b-kind").onchange=e=>{bf.kind=e.target.value;bf.shown=60;renderBank()};
+  renderBank();
+}
+function renderBank(){
+  const txt=bf.text.trim().toLowerCase();
+  const list=Q.filter(q=>(bf.t==="all"||q.t===bf.t)
+    &&(bf.ch==="all"||(bf.ch==="none"?!q.era:q.era&&SBY[q.era].ch===bf.ch))
+    &&(bf.s==="all"||q.era===bf.s)
+    &&(bf.src==="all"||(bf.src==="w"?q.s.includes("wikipedia"):bf.src==="e"?!/^https?:/.test(q.s):/weirdgloop/.test(q.s)))
+    &&(bf.kind==="all"||(bf.kind==="loc")===(q.kind==="loc"))
+    &&(!txt||[q.id,q.q,q.a,...q.w,q.e].join(" ").toLowerCase().includes(txt)));
+  document.getElementById("b-count").textContent=`Showing ${Math.min(bf.shown,list.length)} of ${list.length} matching questions (${Q.length} in total).`;
+  document.getElementById("b-list").innerHTML=list.slice(0,bf.shown).map(q=>`<li class="bq">
+    <div class="top"><span class="id">${esc(q.id)}</span>${chip(q.t)}${q.kind==="loc"?`<span class="chip c-loc">Where Am I?</span>`:""}${q.era?`<span class="era">${esc(eraLabel(q.era))}</span>`:""}</div>
+    <p class="qq">${q.clue?"Where am I? ":""}${esc(q.q)}</p><p class="ans">✓ ${esc(q.a)}</p><p class="oth">Other options: ${q.w.map(esc).join(" · ")}</p>
+    <p class="ex">${esc(q.e)}</p><span class="src">Source: ${srcLink(q.s)}</span></li>`).join("")+
+    (list.length>bf.shown?`<li class="more"><button class="btn ghost" id="b-more">Show 60 more</button></li>`:"");
+  const m=document.getElementById("b-more");if(m)m.onclick=()=>{bf.shown+=60;renderBank()};
+}
+setView("main");
+</script>
