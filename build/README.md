@@ -25,3 +25,8 @@ Tiers: `e` Easy, `m` Medium, `h` Hard, `x` Impossible. `G` = Fortnite Wiki base 
 ## Publishing
 Work goes on the `not-live-till-night` branch. The "Midnight release" GitHub Action merges it into `main` at midnight Eastern.
 Only push straight to `main` if Towsif asks for it.
+
+## Days in play never change
+`pin.js` (part of `npm run build`) reads the live site from `origin/main` and freezes yesterday's, today's and tomorrow's
+questions (Eastern) exactly as players see them now. New questions only start appearing in daily sets from the day after
+tomorrow, so a publish (even a late one) never swaps a day someone has already played. Other modes use new questions right away.
