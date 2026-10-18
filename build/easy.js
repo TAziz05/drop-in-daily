@@ -6,7 +6,6 @@ SEASONS.push(
  ["e","Which golden crime boss turns whatever he touches into gold?","Midas",["Brutus","Meowscles","Kit"],"He leads Midas' Crew.",G+"Midas"],
  ["e","Which muscular cat agent is described as \"one swole cat\"?","Meowscles",["Kit","Meowdas","Cate Meowdy"],"A community artist designed him.",G+"Meowscles"],
  ["e","Which dark outfit is described as the \"brooding master of dark skies\"?","Raven",["Ravage","Omega","Black Knight"],"He arrived in Season 3.",G+"Raven_(Outfit)"],
- ["e","Who is Midas's daughter?","Jules",["Skye","Penny","Hope"],"Midas' Crew includes GHOST and SHADOW.",G+"Midas"],
  ["e","Which outfit has a rainbow-themed look and the description \"The future looks bright...\"?","Brite Bomber",["Rainbow Rider","Brite Gunner","Sparkle Specialist"],"She stars in a lot of LEGO Fortnite promos.",G+"Brite_Bomber"],
  ["m","Who created Peely, as a joke on his brother who dislikes bananas?","Donald Mustard",["Tim Sweeney","Chad Mustard","Ninja"],"Peely was first planned as a man in a banana suit.",G+"Peely"],
  ["m","What's the name of Agent Jones's original first Snapshot from Athena?","Jonesy The First",["Agent Jones","Bunker Jonesy","Captain Jones"],"Snapshots are copies The Loop makes.",G+"Jonesy"],

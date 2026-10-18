@@ -237,7 +237,7 @@ SEASONS.push(
  ["e","What does FNCS stand for?","Fortnite Champion Series",["Fortnite National Cup Series","Fortnite New Competitive Season","Fortnite Network Championship Stream"],"It started in Season X.",G+"Fortnite_Champion_Series"],
  ["e","Which pickaxe goes to the FNCS winning team?","Blade of Champions",["Axe of Champions","Crown Breaker","Golden Pickaxe"],"It replaced the Axe of Champions 2.0.",G+"Fortnite_Champion_Series"],
  ["e","Which Creative island lets players watch the FNCS in game?","Legends Landing",["Party Royale","Battle Lab","Pro Hub"],"You can play Box Fights and Zone Wars there.",G+"Fortnite_Champion_Series"],
- ["e","Which New York stadium hosted the 2019 Fortnite World Cup Finals?","Arthur Ashe Stadium",["Madison Square Garden","Yankee Stadium","Barclays Center"],"It's the home of the US Open tennis tournament.",W+"Fortnite_World_Cup"],
+ ["h","Which New York stadium hosted the 2019 Fortnite World Cup Finals?","Arthur Ashe Stadium",["Madison Square Garden","Yankee Stadium","Barclays Center"],"It's the home of the US Open tennis tournament.",W+"Fortnite_World_Cup"],
  ["m","In which season did the FNCS first take place?","Chapter 1 Season X",["Chapter 1 Season 9","Chapter 2 Season 1","Chapter 2 Season 2"],"It launched as a Trios tournament.",G+"Fortnite_Champion_Series"],
  ["m","What format was the very first FNCS?","Trios",["Solos","Duos","Squads"],"Chapter 2 Season 1 used Squads.",G+"Fortnite_Champion_Series"],
  ["m","How long is the FNCS broadcast delayed?","5 minutes",["30 seconds","2 minutes","15 minutes"],"The Replay Client is delayed by 5 minutes too.",G+"Fortnite_Champion_Series"],

@@ -30,3 +30,9 @@ Only push straight to `main` if Towsif asks for it.
 `pin.js` (part of `npm run build`) reads the live site from `origin/main` and freezes yesterday's, today's and tomorrow's
 questions (Eastern) exactly as players see them now. New questions only start appearing in daily sets from the day after
 tomorrow, so a publish (even a late one) never swaps a day someone has already played. Other modes use new questions right away.
+
+## How daily questions are chosen
+`schedule.js` plans the next 200 days at every build. It uses `history.json` (what the live site actually served,
+recorded by `pin.js`) and always picks the questions that have gone longest without appearing, so new questions come
+up first and nothing repeats until a tier's whole pool has been used. Look-alike questions (same wording, like
+"How long did this season last?") are kept at least 5 days apart and never twice in one day. Commit `history.json`.

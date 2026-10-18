@@ -8,6 +8,9 @@ cur,build=V[-1][0],len(V)
 log=''.join(f'<li><b>{v}</b> <span>{dt}</span> {html.escape(n)}</li>' for v,dt,n in reversed(V))
 ver=f'<div class="ver"><span>{cur} · update #{build}</span></div>'
 pin=open(R+'out/pinned.json').read().replace('</','<\\/') if os.path.exists(R+'out/pinned.json') else '{}'
+sch=open(R+'out/schedule.json').read() if os.path.exists(R+'out/schedule.json') else '{}'
+assert '/*SCHED*/{}' in t
+t=t.replace('/*SCHED*/{}',sch)
 assert '/*PIN*/{}' in t
 t=t.replace('/*PIN*/{}',pin)
 assert '/*DATA*/null' in t and '<!--VERSION-->' in t
