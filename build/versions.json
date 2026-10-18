@@ -228,5 +228,10 @@
   "v12.34",
   "Oct 18, 2026",
   "Smarter daily rotation: no repeats until a tier is used up, look-alike questions spaced out; World Cup venue moved to Hard"
+ ],
+ [
+  "v12.35",
+  "Oct 18, 2026",
+  "Sync devices: move your progress with a copy/paste code"
  ]
 ]
