@@ -6,6 +6,7 @@ const DATES={C6MS2:"Oct 29, 2025",C7S1:"Nov 27, 2025",C7S2:"Mar 16, 2026",C7S3:"
 const EMOJI=["👽","🛸","🤖","👾"];
 const words=WORDS.map(w=>w[1]).filter(w=>w!=="👽");
 WORDS.forEach(([id,word],i)=>{
+  if(id==="C2R")return; // the season's own name gives this one away; asked the other way round below
   const S=SEASONS.find(s=>s.id===id);if(!S)throw new Error("no season "+id);
   let wrong;
   if(word==="👽")wrong=EMOJI.slice(1);
@@ -36,6 +37,7 @@ SEASONS.push(
  ["h","Mark Rein's word for which season was \"Pickled\"?","Chapter 6 Season 2",["Chapter 6 Season 1","Chapter 6 Season 3","Chapter 5 Season 4"],"His Chapter 6 Season 3 word was S-Tier.",MR],
  ["h","Mark Rein's word for which season was \"Exfil\"?","Chapter 7 Season 3",["Chapter 7 Season 2","Chapter 7 Season 4","Chapter 6 Season 2"],"He posted it on June 2, 2026.",MR+", Jun 2, 2026"],
  ["h","Mark Rein's word for which season was \"Rewind\"?","Chapter 4 Season OG",["Chapter 2 Remix","Chapter 4 Season 4","Chapter 5 Season 1"],"Season OG brought the Chapter 1 map back.",MR],
+ ["m","Mark Rein's word for which season was simply \"Remix\"?","Chapter 2 Remix",["Chapter 4 Season OG","Chapter 6 Season 1","Chapter 5 Season 4"],"It closed out Chapter 5 in November 2024.",MR],
  ["h","Mark Rein's word for Galactic Battle was what?","Apprentice",["Padawan","Orbital","Skyzips"],"Galactic Battle was a Chapter 6 mini season.",MR],
  ["x","Which season's word did Mark Rein post on October 29, 2025: \"Shard-a-ma-jig\"?","Chapter 6 Mini Season 2",["Chapter 6 Season 4","Chapter 7 Season 1","Chapter 6 Mini Season 1"],"It was Fortnite | The Simpsons.",MR+", Oct 29, 2025"],
  ["x","Mark Rein's word for which season was \"Superb\"?","Chapter 2 Season 4",["Chapter 2 Season 3","Chapter 2 Season 5","Chapter 1 Season 8"],"Chapter 2 Season 4 was the Marvel season.",MR],
