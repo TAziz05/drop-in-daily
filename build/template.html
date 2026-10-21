@@ -224,6 +224,13 @@ function tagLeaks(q){const s=SBY[q.era];if(!s)return false;
   if(/\b(Season|Chapter)\b/.test(q.a))return true;
   const lab=wordsOf(s.ch+" "+s.name+" "+s.sub),ov=wordsOf(q.a).filter(w=>lab.includes(w));
   return ov.length>0&&!q.w.some(w=>wordsOf(w).some(x=>ov.includes(x)));}
+// The season label to show above a question: the full label, or just "Chapter X · Season Y" when the
+// season's name would give the answer away, or nothing when even that would.
+function shownLabel(q){const s=SBY[q.era];if(!s)return"";
+  if(!tagLeaks(q))return eraLabel(q.era);
+  if(/\b(Season|Chapter)\b/.test(q.a)||s.ch==="Fortnite OG")return"";
+  const short=`${s.ch} · ${s.name}`,ov=wordsOf(q.a).filter(w=>wordsOf(short).includes(w));
+  return ov.length&&!q.w.some(w=>wordsOf(w).some(x=>ov.includes(x)))?"":short}
 const chip=t=>`<span class="chip c-${t}">${TIERS[t].tier} · ${TIERS[t].label}</span>`;
 
 const app=document.getElementById("app");
@@ -264,7 +271,7 @@ function hud(){const label=S.mode==="daily"?chip(S.t):`<span class="chip c-m">${
   return `<div class="hud">${label}<div class="pips" aria-label="Question ${S.i+1} of ${S.qs.length}">${S.qs.map((_,k)=>`<span class="pip ${k<S.marks.length?(S.marks[k]?"ok":"no"):k===S.i?"cur":""}"></span>`).join("")}</div></div>`}
 function question(){
   const q=S.qs[S.i];
-  app.innerHTML=hud()+(q.era&&!tagLeaks(q)?`<span class="era">${esc(eraLabel(q.era))}</span>`:"")+
+  app.innerHTML=hud()+(q.era&&shownLabel(q)?`<span class="era">${esc(shownLabel(q))}</span>`:"")+
    (S.mode!=="daily"?`<div>${chip(q.t)}</div>`:"")+
    (q.clue?`<span class="clue-head">${PIN}Where am I?</span><p class="clue">${esc(q.q)}</p>`:`<p class="q">${esc(q.q)}</p>`)+`<div class="opts">${q.opts.map((o,k)=>`<button class="opt" id="opt-${k}" data-o="${esc(o)}"><span class="k">${"ABCD"[k]}</span><span>${esc(o)}</span></button>`).join("")}</div><div id="after"></div>`;
   app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(b));
@@ -417,7 +424,7 @@ function endlessHud(){return `<div class="hud"><span class="chip c-m">Endless</s
 function endlessQ(){
   if(S.i>=S.deck.length){S.deck=shuffle(S.pool);S.i=0}
   const q=withOpts(S.deck[S.i]);S.cur=q;
-  app.innerHTML=endlessHud()+(q.era&&!tagLeaks(q)?`<span class="era">${esc(eraLabel(q.era))}</span>`:"")+`<div>${chip(q.t)}</div>`+
+  app.innerHTML=endlessHud()+(q.era&&shownLabel(q)?`<span class="era">${esc(shownLabel(q))}</span>`:"")+`<div>${chip(q.t)}</div>`+
    (q.clue?`<span class="clue-head">${PIN}Where am I?</span><p class="clue">${esc(q.q)}</p>`:`<p class="q">${esc(q.q)}</p>`)+
    `<div class="opts">${q.opts.map((o,k)=>`<button class="opt" data-o="${esc(o)}"><span class="k">${"ABCD"[k]}</span><span>${esc(o)}</span></button>`).join("")}</div><div id="after"></div>`;
   app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>endlessAnswer(b));
