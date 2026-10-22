@@ -42,7 +42,7 @@ SEASONS.push(
  ["m","In the Infinity Gauntlet mode, what happened when you equipped the Gauntlet?","You turned into Thanos",["You became invisible","You got infinite ammo","You won instantly"],"A meteor delivered it about two minutes in.",G+"Infinity_Gauntlet_Limited_Time_Mashup"],
  ["h","How long into a Floor is Lava match does the lava start rising?","5 minutes",["1 minute","10 minutes","Right away"],"It keeps rising until the island is covered.",G+"Floor_Is_Lava"],
  ["h","What rises in Midas Presents: The Floor is Lava?","Molten gold",["Slurp","Chrome","Water"],"Midas cursed the lava as he escaped the Underworld.",G+"Midas_Presents:_The_Floor_is_Lava"],
- ["h","What team size did The Getaway use?","Duos",["Solos","Trios","Squads"],"It holds up to 100 players.",G+"The_Getaway"],
+ ["h","What team size did The Getaway use when it launched in Season 5?","Duos",["Solos","Trios","Teams of 20"],"The wiki lists it as a Duos mode for up to 100 players.",G+"The_Getaway"],
  ["h","What happens to a player carrying a Jewel in The Getaway?","They heal over time but move 10% slower",["They become invisible","They take storm damage","They can't build"],"Four Jewels are always in play.",G+"The_Getaway"],
  ["h","Which movie did the Infinity Gauntlet mode tie into?","Avengers: Infinity War",["Avengers: Endgame","Guardians of the Galaxy","Thor: Ragnarok"],"It ran May 8–16, 2018.",G+"Infinity_Gauntlet_Limited_Time_Mashup"],
  ["h","Which season did Midas Presents: The Floor is Lava arrive in?","Chapter 5 Season 2",["Chapter 2 Season 2","Chapter 2 Season 5","Chapter 4 Season 2"],"It released March 20, 2024.",G+"Midas_Presents:_The_Floor_is_Lava"],

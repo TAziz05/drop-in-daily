@@ -75,7 +75,7 @@ SEASONS.push(
  ["m","How do you hover with the Jetpack?","Aim down sights",["Hold crouch","Double jump","Press reload"],"Jumping boosts you up.",G+"Jetpack"],
  ["x","The Jetpack was the first Battle Royale item with what?","Limited durability",["A Mythic version","A cooldown","Its own ammo"],"It was first called the Boost Jump Pack.",G+"Jetpack"],
  ["m","Which item's description is \"No one will believe you caught this!\"?","Mythic Goldfish",["Flopper","Zero Point Fish","Thermal Fish"],"It's a golden Flopper on a podium.",G+"Mythic_Goldfish"],
- ["x","The Mythic Goldfish was the first Mythic you could get from what?","Llamas",["Fishing","Bosses","Supply Drops"],"It was also Chapter 2's first Mythic.",G+"Mythic_Goldfish"],
+ ["x","Besides fishing, the Mythic Goldfish became the first Mythic you could get from what?","Llamas",["Bosses","Supply Drops","Vending Machines"],"It was also the first Mythic added in Chapter 2.",G+"Mythic_Goldfish"],
  ["m","Which item \"creates a Storm in the Safe Zone, or creates a Safe Zone in the Storm\"?","Storm Flip",["Storm Scout","Rift-To-Go","Storm Forecast Boon"],"It's the only item affected by where the storm is.",G+"Storm_Flip"],
  ["x","When was the Storm Flip first added?","Chapter 1 Season 9",["Chapter 1 Season 8","Chapter 1 Season X","Chapter 2 Season 1"],"It came in Update v9.20 on June 6, 2019.",G+"Storm_Flip"],
  ["m","Which trap \"creates blocks of ice around the feet\"?","Chiller",["Freeze Trap","Ice Grenade","Snowball Launcher"],"It freezes teammates too.",G+"Chiller"],
@@ -193,7 +193,7 @@ SEASONS.push(
  ["x","How many levels did a Level-Up Pack give?","28",["10","25","50"],"They were retired after Chapter 5 Season 4."],
  ["x","What do Survivor Medal quests unlock?","Prized Llama styles",["Free V-Bucks","Mythic weapons","Battle Pass pages"],"They started in Chapter 4 Season 4."],
  ["x","Which update removed the Challenges tab?","v12.00",["v10.00","v11.00","v19.00"],"Challenges moved to the Battle Pass tab, then the Play tab."],
- ["x","What brought free quest rewards back in Season 8, with old cosmetics?","High Stakes Challenges",["Overtime Challenges","Road Trip Challenges","Fortbyte Challenges"],"They rewarded old cosmetics alongside new ones."],
+ ["x","Which Season 5 challenges returned in Season 8, bringing back their old cosmetics along with new ones?","High Stakes Challenges",["Road Trip Challenges","Overtime Challenges","Fortbyte Challenges"],"Free quest rewards have been allowed to return since Season 8."],
 ]},
 {id:"MAPS",ch:"Loot & Lore",name:"Islands & Codenames",sub:"Maps and their file names",page:"Map_Gallery",qs:[
  ["m","Which of these is a Reload map?","Slurp Rush",["Asteria Awakened","Stark Island","Starfall Island"],"The others are Blitz Royale maps."],

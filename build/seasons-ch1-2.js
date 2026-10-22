@@ -245,7 +245,7 @@ const SEASONS=[
  ["h","Which chimp astronaut was a Battle Pass outfit?","J.B. Chimpanski",["Kong","Chimpano","Bananas"],"He was on Page 7."],
  ["h","What did The Convergence become in November 2021?","The Pyramid",["The Sanctuary","The Collider","The Cube Palace"],"It changed in Update v18.40."],
  ["h","What dark reality bled into the island this season?","The Sideways",["The In-Between","The Nothing","The Spirit Realm"],"It spread after The Mothership was destroyed."],
- ["x","What Victory Royale glider did you get?","Umbrella of the Last Reality",["Seven Signet","Cube 'Brella","Sideways Shield"],"It hinted at The Last Reality invasion."],
+ ["x","Which umbrella did your first Victory Royale this season earn you?","Umbrella of the Last Reality",["Seven Signet","Cube 'Brella","Sideways Shield"],"It hinted at The Last Reality invasion."],
  ["x","How many Corruption Cubes remained after Sky Fire?","Six",["Three","Seven","Ten"],"The Season X Cube was in Steamy Stacks."],
  ["x","What did The End (Chapter 2) do to the island?","Flipped it",["Froze it","Sank it","Burned it"],"The Foundation and The Scientist evacuated Loopers before the rotation.",G+"Live_Events"],
  ["x","How many days did Chapter 2 Season 8 last?","82",["70","96","104"],"It was the second-shortest Chapter 2 season."],
