@@ -71,4 +71,7 @@ SEASONS.push(
  ["x","How much damage did the Uncommon Dual Fiend Hunters deal after the October 2026 buff?","37",["34","35","40"],"They went up from 34.","https://fortnite.gg/weapons/changes"],
 ]}
 );
+SEASONS.push({id:"MUSIC",ch:"Loot & Lore",name:"Lobby Music",sub:"Music packs and their songs",url:"https://fortnite.fandom.com/wiki/Meet_Me_in_the_Sticks",qs:[
+ ["x","In the \"Meet Me in the Sticks\" lobby music, what time does Sticks close?","9:06",["9:00","10:15","11:59"],"It's a Fishstick-themed music pack from Chapter 4 Season 2.","https://fortnite.fandom.com/wiki/Meet_Me_in_the_Sticks"],
+]});
 })();
