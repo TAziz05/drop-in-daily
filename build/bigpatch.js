@@ -48,7 +48,7 @@ SEASONS.push(
  ["x","In which update was the Klombo added to LEGO Fortnite?","v31.20",["v28.00","v29.00","v33.00"],"That was Chapter 5 Season 4.",G+"Klombo"],
 ]},
 {id:"FISH",ch:"Loot & Lore",name:"Fishing",sub:"Rods, spots and every fish",page:"Fishing",qs:[
- ["e","Which fish heals 40 HP and is Common?","Flopper",["Small Fry","Shieldfish","Jellyfish"],"Floppers can be caught almost anywhere.",G+"Fishing"],
+ ["e","Which plain fish heals 40 HP with no extra effect?","Flopper",["Small Fry","Shieldfish","Jellyfish"],"It's Uncommon, and can be caught almost anywhere.","https://fortnite-archive.fandom.com/wiki/Flopper"],
  ["e","Which fish gives you 50 shield?","Shieldfish",["Flopper","Small Fry","Spicy Fish"],"It's Rare.",G+"Fishing"],
  ["e","Which fish turns all the weapons in your inventory Legendary?","Midas Flopper",["Thermal Fish","Vendetta Flopper","Slurpfish"],"It also heals 40 HP.",G+"Fishing"],
  ["e","Which fish gives a short speed boost?","Spicy Fish",["Snowy Flopper","Cuddle Fish","Jellyfish"],"It heals 15 HP too.",G+"Fishing"],
@@ -74,7 +74,7 @@ SEASONS.push(
  ["h","Which fish method can never catch the Mythic Goldfish?","Explosions",["A Fishing Rod","A Pro Fishing Rod","A Fishing Spot"],"It's a 1 in a million chance otherwise.",G+"Fishing"],
  ["x","How much health does a Stink Flopper heal?","20",["15","40","50"],"It's Uncommon.",G+"Fishing"],
  ["x","Which of these fish is NOT Legendary?","Slurpfish",["Midas Flopper","Thermal Fish","Vendetta Flopper"],"The Slurpfish is Epic.",G+"Fishing"],
- ["x","Which of these fish is Uncommon?","Snowy Flopper",["Flopper","Spicy Fish","Hop Flopper"],"Stink Floppers are Uncommon too.",G+"Fishing"],
+ ["x","Which of these fish is Uncommon?","Snowy Flopper",["Small Fry","Spicy Fish","Hop Flopper"],"Floppers and Stink Floppers are Uncommon too.",G+"Fishing"],
 ]},
 {id:"MATCH",ch:"Events & Gameplay",name:"Match Basics",sub:"Crowns, vans, Llamas and benches",page:"Victory_Crown",qs:[
  ["e","How do you earn a Victory Crown?","Win a Victory Royale",["Get 10 eliminations","Finish a Battle Pass","Open a Supply Llama"],"Others can pick up a crown you drop.",G+"Victory_Crown"],

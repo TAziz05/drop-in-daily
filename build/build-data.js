@@ -95,7 +95,7 @@ for(const q of out){
   if(!["e","m","h","x"].includes(q.t))errs.push("tier "+q.id);
   if(q.w.length!==3)errs.push("needs 3 wrong "+q.id);
   if(q.w.includes(q.a)||new Set(q.w).size!==3)errs.push("dup option "+q.id);
-  if(!/^https:\/\/(en\.wikipedia\.org|fortnite\.weirdgloop\.org|fortnite\.gg)\//.test(q.s)&&!/^(Epic Games |Mark Rein )/.test(q.s)&&!/\(@\w+\) on X/.test(q.s))errs.push("source "+q.id);
+  if(!/^https:\/\/(en\.wikipedia\.org|fortnite\.weirdgloop\.org|fortnite\.gg|fortnite\.fandom\.com|fortnite-archive\.fandom\.com)\//.test(q.s)&&!/^(Epic Games |Mark Rein )/.test(q.s)&&!/\(@\w+\) on X/.test(q.s))errs.push("source "+q.id);
   const key=(q.era||"")+"|"+q.q+(/^(Three of these|Which of these was a Chapter|Which (came|happened|wildlife arrived|Mythic came|Boon set came|Medallion set came|Exotic arrived|boss came|member of The Seven appeared|of these (came|happened|mechanics came|perk systems came|wildlife arrived)))/.test(q.q)?"|"+q.a:"");if(seen.has(key))errs.push("dup question "+q.id+" "+q.q);seen.add(key);
 }
 if(errs.length){console.error(errs.join("\n"));process.exit(1)}
