@@ -196,7 +196,7 @@ SEASONS.push(
  ["x","What was Team Rumble before Update v14.10 cut it down?","20v20",["25v25","50v50","10v10"],"It changed to 16v16."],
 ]},
 {id:"MZB",ch:"Game Modes",name:"Zero Build",sub:"Battle Royale without building",page:"Zero_Build",qs:[
- ["h","What goes in Zero Build's sixth inventory slot?","Pocket Items",["Building pieces","Healing only","A second pickaxe"],"You can swap your Pocket Item at a Vending Machine."],
+ ["h","What goes in Zero Build's sixth inventory slot?","Pocket Items",["Building pieces","Healing only","A second pickaxe"],"Pocket Items include the Port-A-Bunker and Shield Bubble Jr."],
  ["h","Battle Royale was first planned as an extra mode for which game?","Save the World",["Paragon","Unreal Tournament","Gears of War"],"The team changed course about two weeks before release."],
  ["x","Which update made Zero Build an option within Battle Royale instead of its own mode?","v39.40",["v20.00","v30.20","v33.00"],"It had been a separate mode until then."],
  ["x","What happens to Overshield when you go unharmed for a while?","It regenerates",["It disappears","It turns into Shield","It doubles"],"Eliminations can also restore it."],
