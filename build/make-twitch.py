@@ -33,6 +33,7 @@ w=lambda name,text: open(DIST+name,'w').write(text)
 w('game.css','\n'.join(s.strip() for s in styles)+'\n')
 w('game.js',game.strip()+'\n'); w('theme.js',scripts[1].strip()+'\n'); w('eggs.js',scripts[2].strip()+'\n')
 for f in ['loader.js','live.js','live_config.js','twitch.css']: shutil.copy(SRC+f,DIST+f)
+for f in os.listdir(ROOT+'twitch/fonts/'): shutil.copy(ROOT+'twitch/fonts/'+f,DIST+f)  # bundled fonts (Twitch blocks Google Fonts)
 w('config.js','window.TWITCH_CFG='+json.dumps({'game':CFG['game'],'data':CFG['site'].rstrip('/')+'/twitch-data.json','ebs':ebs,'tiers':CFG['tiers']},ensure_ascii=False)+';\n')
 HELPER='<script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>'
 def page(title,body_cls,body,css,js):
@@ -52,9 +53,17 @@ def page(title,body_cls,body,css,js):
 </html>
 '''
 g=CFG['game']
-w('panel.html',page(g,'tw-panel',markup,['game.css','twitch.css'],['config.js','loader.js']))
+w('panel.html',page(g,'tw-panel',markup,['fonts.css','game.css','twitch.css'],['config.js','loader.js']))
 # Mobile: the same game and live play-along, sized for the chat area of Twitch's phone apps (portrait and landscape).
-w('mobile.html',page(g,'tw-panel tw-mobile',markup,['game.css','twitch.css'],['config.js','loader.js']))
-w('live.html',page(g+' · Live','tw-live','<div id="live-slot"></div>',['game.css','twitch.css'],['config.js','live.js']))
+w('mobile.html',page(g,'tw-panel tw-mobile',markup,['fonts.css','game.css','twitch.css'],['config.js','loader.js']))
 w('live_config.html',page(g+' · Live controls','tw-config','<main id="cfg"></main>',['twitch.css'],['config.js','live_config.js']))
-print('twitch: built',len(os.listdir(DIST)),'files for',ebs if 'YOUR-WORKER' not in ebs else 'a placeholder server address (fill in twitch/ebs-url.txt)')
+
+# The Live extension (a separate Twitch extension, because one extension can sit in only one slot): a video component
+# that shows just the current live question, plus the same streamer controls. Zip the files inside ../twitch/dist-live.
+LIVE=ROOT+'twitch/dist-live/'
+if os.path.exists(LIVE): shutil.rmtree(LIVE)
+os.makedirs(LIVE)
+for f in ['config.js','live.js','live_config.js','twitch.css','game.css','live_config.html']: shutil.copy(DIST+f,LIVE+f)
+for f in os.listdir(ROOT+'twitch/fonts/'): shutil.copy(ROOT+'twitch/fonts/'+f,LIVE+f)
+open(LIVE+'live.html','w').write(page(g+' · Live','tw-live','<div id="live-slot"></div>',['fonts.css','game.css','twitch.css'],['config.js','live.js']))
+print('twitch: built',len(os.listdir(DIST)),'+',len(os.listdir(LIVE)),'files for',ebs if 'YOUR-WORKER' not in ebs else 'a placeholder server address (fill in twitch/ebs-url.txt)')

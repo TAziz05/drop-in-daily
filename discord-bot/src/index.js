@@ -3,7 +3,7 @@
 // and the website all serve the same Daily Drop each day (America/New_York date).
 import ACTIVITY_JS from "./activity-bundle.js";
 import { GAME, mergeKeys, achievementsEmbed } from "./progress.js";
-import { twitch } from "./twitch.js";
+import { twitch, twitchCleanup } from "./twitch.js";
 
 const TZ = "America/New_York";
 const API = env => env.DISCORD_API || "https://discord.com/api/v10";
@@ -313,6 +313,7 @@ async function dailyPost(env, guild, channel, day) {
 }
 async function cron(env) {
   try { await ensureCommands(env); } catch (e) { console.log("commands", e.stack || e); }
+  try { await twitchCleanup(env); } catch (e) { console.log("twitch cleanup", e.stack || e); }
   const day = nyDay(), hour = nyHour();
   const { results } = await (await db(env)).prepare("SELECT guild_id, channel_id FROM channels WHERE hour=? AND (last_day IS NULL OR last_day<>?)").bind(hour, day).all();
   for (const c of results) {
@@ -448,7 +449,7 @@ async function api(env, req, path, ctx) {
 // Pasted secrets sometimes carry spaces or line breaks; clean them once.
 function clean(env) {
   const out = { ...env };
-  for (const k of ["DISCORD_APP_ID", "DISCORD_PUBLIC_KEY", "DISCORD_BOT_TOKEN", "DISCORD_CLIENT_SECRET", "SETUP_KEY", "TWITCH_EXT_CLIENT_ID", "TWITCH_EXT_SECRET", "TWITCH_EXT_OWNER_ID"])
+  for (const k of ["DISCORD_APP_ID", "DISCORD_PUBLIC_KEY", "DISCORD_BOT_TOKEN", "DISCORD_CLIENT_SECRET", "SETUP_KEY", "TWITCH_EXT_CLIENT_ID", "TWITCH_EXT_SECRET", "TWITCH_EXT_OWNER_ID", "TWITCH_LIVE_CLIENT_ID", "TWITCH_LIVE_SECRET"])
     if (typeof out[k] === "string") out[k] = out[k].trim().replace(/^["']|["']$/g, "");
   return out;
 }
@@ -488,6 +489,8 @@ export default {
           ["Twitch: TWITCH_EXT_CLIENT_ID set (optional, for the Twitch extension)", !!env.TWITCH_EXT_CLIENT_ID],
           ["Twitch: TWITCH_EXT_SECRET set (optional)", !!env.TWITCH_EXT_SECRET],
           ["Twitch: TWITCH_EXT_OWNER_ID set (optional)", !!env.TWITCH_EXT_OWNER_ID && /^\d+$/.test(env.TWITCH_EXT_OWNER_ID)],
+          ["Twitch Live: TWITCH_LIVE_CLIENT_ID set (optional, for the Live extension)", !!env.TWITCH_LIVE_CLIENT_ID],
+          ["Twitch Live: TWITCH_LIVE_SECRET set (optional)", !!env.TWITCH_LIVE_SECRET],
         ];
         return new Response(`<!doctype html><meta name="viewport" content="width=device-width"><body style="font-family:system-ui;padding:20px"><h2>Drop-In Daily bot status</h2>${lines.map(([t, ok]) => `<p>${ok ? "✅" : "❌"} ${t}</p>`).join("")}${pk && !/^[0-9a-f]{64}$/i.test(pk) ? `<p>Your public key is ${pk.length} characters long. It should be exactly 64.</p>` : ""}`, { headers: { "content-type": "text/html; charset=utf-8" } });
       }
