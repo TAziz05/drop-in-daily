@@ -1,0 +1,1 @@
+window.TWITCH_CFG={"game": "Drop-In Daily", "data": "https://taziz05.github.io/drop-in-daily/twitch-data.json", "ebs": "https://YOUR-WORKER.workers.dev", "tiers": {"e": "Uncommon · Easy", "m": "Rare · Medium", "h": "Legendary · Hard", "x": "Mythic · Impossible"}};
