@@ -36,3 +36,10 @@ tomorrow, so a publish (even a late one) never swaps a day someone has already p
 recorded by `pin.js`) and always picks the questions that have gone longest without appearing, so new questions come
 up first and nothing repeats until a tier's whole pool has been used. Look-alike questions (same wording, like
 "How long did this season last?") are kept at least 5 days apart and never twice in one day. Commit `history.json`.
+
+## Look, secrets and achievements
+The block at the end of `template.html` (after the main script) adds the themed look, the animations, five hidden secrets,
+and the Achievements tab. It only wraps the game's own functions, so the game still works if the block is removed.
+- Milestones are worked out from saved results in this browser (`*:YYYY-MM-DD:*` keys and Endless stats).
+- Secrets, their counters and seen achievements are saved under `dropin:secrets`, `dropin:eggcounts` and `dropin:ach`,
+  so Sync devices carries them too.

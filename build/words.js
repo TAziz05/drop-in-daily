@@ -35,6 +35,7 @@ SEASONS.push(
  ["m","Mark Rein's word for which season was \"#SavePeely\"?","Chapter 5 Season 1",["Chapter 5 Season 2","Chapter 4 Season OG","Chapter 6 Season 1"],"Peely needed saving in Chapter 5's first season.",MR],
  ["h","Mark Rein's word for which season was \"Dodecahedron\"?","Chapter 7 Season 1",["Chapter 6 Season 4","Chapter 7 Season 2","Chapter 6 Mini Season 2"],"He posted it on November 27, 2025.",MR+", Nov 27, 2025"],
  ["h","Mark Rein's word for which season was \"Pickled\"?","Chapter 6 Season 2",["Chapter 6 Season 1","Chapter 6 Season 3","Chapter 5 Season 4"],"His Chapter 6 Season 3 word was S-Tier.",MR],
+ ["m","Mark Rein's word for which season was \"Plunder\"?","Chapter 7 Mini Season",["Chapter 7 Season 4","Chapter 1 Season 8","Chapter 7 Season 3"],"He posted it on October 30, 2026, for Treasure Hunters.",MR+", Oct 30, 2026"],
  ["h","Mark Rein's word for which season was \"Exfil\"?","Chapter 7 Season 3",["Chapter 7 Season 2","Chapter 7 Season 4","Chapter 6 Season 2"],"He posted it on June 2, 2026.",MR+", Jun 2, 2026"],
  ["h","Mark Rein's word for which season was \"Rewind\"?","Chapter 4 Season OG",["Chapter 2 Remix","Chapter 4 Season 4","Chapter 5 Season 1"],"Season OG brought the Chapter 1 map back.",MR],
  ["m","Mark Rein's word for which season was simply \"Remix\"?","Chapter 2 Remix",["Chapter 4 Season OG","Chapter 6 Season 1","Chapter 5 Season 4"],"It closed out Chapter 5 in November 2024.",MR],
