@@ -31,7 +31,7 @@ SEASONS.push(
  ["h","When was The Last Reality first directly seen?","Chapter 2 Season 7",["Chapter 1 Season 5","Chapter 2 Season 4","Chapter 3 Season 3"],"It was indirectly referenced back in Season 5.",G+"The_Last_Reality"],
  ["h","When was The Last Reality first indirectly referenced?","Chapter 1 Season 5",["Chapter 1 Season 7","Chapter 2 Season 1","Chapter 2 Season 7"],"It showed up directly in Chapter 2 Season 7.",G+"The_Last_Reality"],
  ["h","When did The Spire appear on the island?","The Zero Crisis Finale, Chapter 2 Season 6",["The End, Chapter 1 Season X","Operation: Sky Fire, Chapter 2 Season 7","The Device, Chapter 2 Season 2"],"Before that it had called to Raz in his dreams.",G+"The_Spire"],
- ["h","What happened to The Spire at the start of Chapter 2 Season 7?","The Last Reality abducted it",["It exploded","It sank into the sea","It turned to Chrome"],"The Aftermath replaced it.",G+"The_Spire"],
+ ["h","What took The Spire's place at the start of Chapter 2 Season 7?","The Aftermath",["Coral Castle","The Ruins","Colossal Coliseum"],"The Last Reality's Mothership took out The Spire; the wiki describes it as both blown up and abducted.",G+"The_Spire"],
  ["h","When did the Reality Tree first appear?","Chapter 3 Season 3",["Chapter 3 Season 2","Chapter 3 Season 4","Chapter 4 Season 1"],"It grew at the center of Reality Falls.",G+"Reality_Tree"],
  ["h","What did the Reality Tree become after Reality Zero was destroyed?","The Herald Tree",["The Spire","The Zero Point","The Mega Tree"],"It ended up on Asteria.",G+"Reality_Tree"],
  ["x","Which member of The Seven was the last to be released as an outfit?","The Order",["The Paradigm","The Origin","The Imagined"],"Her outfit came out on May 15, 2022.",G+"The_Order"],

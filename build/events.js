@@ -106,7 +106,7 @@ SEASONS.push(
 {id:"EVBUS",ch:"Events & Gameplay",name:"The Battle Bus",sub:"Every match's ride",page:"Battle_Bus",qs:[
  ["e","What keeps the default Battle Bus in the air?","A hot air balloon",["Jet engines","Helicopter rotors","Magic"],"A blue flame inflates it."],
  ["e","What sound plays when the Battle Bus doors open?","Its horn",["A bell","A siren","A whistle"],"Anyone still aboard at the end of the route is dropped."],
- ["m","What shape is the Battle Bus's route?","Always a straight line",["A circle around the island","A zigzag","A figure eight"],"The path is random each match."],
+ ["m","When no player is driving it, what shape is the Battle Bus's route?","A straight line",["A circle around the island","A zigzag","A figure eight"],"The path is random each match. In some seasons, like Treasure Hunters, a random player gets to steer the bus instead."],
  ["m","What can you do inside the bus with the emote button?","Thank the bus driver",["Honk the horn","Pick the route","Kick a player off"],"It posts a message in the Elimination Feed."],
  ["m","What does the Winterfest Battle Bus have on its balloon?","An inflatable Santa head",["A giant snowman","Reindeer antlers","A Christmas tree"],"Fairy lights decorate it too."],
  ["h","Who was revealed driving the Battle Bus in Chapter 6 Mini Season 2?","Otto Mann",["Homer Simpson","Jonesy","Ray"],"The driver's identity had been unknown until then."],

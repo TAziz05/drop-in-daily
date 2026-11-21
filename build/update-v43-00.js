@@ -36,6 +36,7 @@ add("SPRITES",
  ["h","Which Treasure Hunters Sprite marks eliminations on the map, with a range that grows as it levels?","Halfpeel'd",["Wayfinder","Plundarrgh","Exmarks"],"It arrived in Update v43.00.",U],
  ["h","What's the downside of the Cursed Sprite variant?","Water damages you",["It slows you down","It drains Sprite Dust","It reveals you on the map"],"It boosts your chance of rare variants.",U],
  ["x","What does the Sweet Dreams Sprite give you at Max level?","A Mythic item",["A Legendary weapon","Full shield","A Golden Firework"],"It gives a random item every time it levels up.",U],
- ["x","Which umbrella did mastering 40 Sprites earn in Treasure Hunters?","Navigator's Nosedive",["Jolly Roger 'Brella","Sprite 'Brella","Captain's Canopy"],"A new Sprite Mastery page unlocks every week.",U]
+ ["x","Which umbrella did mastering 40 Sprites earn in Treasure Hunters?","Navigator's Nosedive",["Jolly Roger 'Brella","Sprite 'Brella","Captain's Canopy"],"A new Sprite Mastery page unlocks every week.",U],
+ ["h","Epic's Mark Rein posts one \"word\" before every season. What was his word for this season?","Plunder",["Hackers","Exfil","Skyzips"],"Fans ask him for his word before each new season.","Mark Rein (@MarkRein) on X, Oct 30, 2026"]
 );
 })();
