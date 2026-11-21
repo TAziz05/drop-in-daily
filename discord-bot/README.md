@@ -24,6 +24,15 @@ are added together and counters keep the higher number. `/daily` results count t
 New or changed slash commands register themselves on the bot's hourly check, so there's no need to revisit `/setup`.
 Progress on the website itself stays in that browser (use Sync devices there).
 
+## Usage counts in GoatCounter (optional)
+The Worker can count Discord and Twitch use in GoatCounter, next to the website's visits: commands like `/daily`,
+finished dailies, the Activity, and on Twitch the panel, mobile view, Live box, streamer controls, live questions and
+answers. They show up as events under this game's path (for example `.../discord/daily` or `.../twitch/answer`).
+Players are counted by a scrambled ID, never their Discord or Twitch ID.
+To turn it on: in GoatCounter open your username menu → **API** → create a key with permission to **record
+pageviews**, then add it to this Worker as a Secret named `GOATCOUNTER_TOKEN`. (Optional: `GOATCOUNTER_URL` if your
+GoatCounter address isn't https://taziz322.goatcounter.com.)
+
 ## Setup (one time)
 1. **GitHub:** put this `discord-bot` folder and the `daily` folder in the drop-in-daily repo.
 2. **Discord:** at discord.com/developers/applications make a New Application, then copy:
@@ -55,5 +64,6 @@ within about 10 minutes; it doesn't need redeploying.
 - `src/index.js` – the Worker (commands, buttons, leaderboards, Activity sign-in, morning post)
 - `client/activity.js` – the script that runs inside the Activity
 - `src/progress.js` – achievements, milestone rules and the progress merge (shared by the Worker and the Activity)
+- `src/analytics.js` – sends usage counts to GoatCounter
 - `src/twitch.js` – the Twitch extension's live play-along routes (`/twitch/...`); see `../twitch/README.md`
 - `src/activity-bundle.js` – `client/activity.js` bundled with Discord's Embedded App SDK
