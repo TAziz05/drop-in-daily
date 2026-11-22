@@ -32,6 +32,7 @@ function decorateHud(){const h=app.querySelector(".hud");if(!h||!S||!S.qs||h.que
 /* ---- skydive intro ---- */
 function dropIn(then,short){
   if(R){then();return}
+  window.SND&&SND.play("skydive",short);
   const o=document.createElement("div");o.className="fn-jump";o.setAttribute("role","presentation");
   let bits="";for(let i=0;i<16;i++)bits+=`<span class="streak" style="left:${Math.random()*100}%;height:${60+Math.random()*120}px;animation-duration:${.35+Math.random()*.4}s;animation-delay:-${Math.random()}s"></span>`;
   for(let i=0;i<7;i++)bits+=`<span class="puff" style="--s:${90+Math.random()*160}px;left:${Math.random()*90-10}%;animation-duration:${.9+Math.random()*.8}s;animation-delay:-${Math.random()*1.5}s"></span>`;
@@ -46,9 +47,9 @@ function dropIn(then,short){
 
 /* ---- wrap the game's functions ---- */
 const _main=mainView,_home=home,_q=question,_a=answer,_r=results,_ea=endlessAnswer;
-mainView=function(){_main();const go=document.getElementById("go");if(go){const orig=go.onclick;go.onclick=()=>dropIn(orig)}};
+mainView=function(){_main();const go=document.getElementById("go");if(go){const orig=go.onclick;go.onclick=()=>inProgress("main",mainSet())?orig():dropIn(orig)}};
 home=function(){_home();app.querySelectorAll(".diff").forEach(b=>{const t=b.dataset.t;b.onclick=()=>{
-  const d=store.get(keyFor(t)),qs=todays(t);if(d&&d.ids&&d.ids.join()===qs.map(q=>q.id).join())startDaily(t);else dropIn(()=>startDaily(t),true)}})};
+  const d=store.get(keyFor(t)),qs=todays(t);if(d&&d.ids&&d.ids.join()===qs.map(q=>q.id).join()||inProgress(t,qs))startDaily(t);else dropIn(()=>startDaily(t),true)}})};
 question=function(){_q();decorateHud()};
 function onAnswer(btn,ok,t,label){
   if(ok){dmgNum(btn,"+"+XP[t],t==="m");pushFeed(`<b>You</b>${CROSS(TC[t])}<span>${label}</span>`,TC[t])}
