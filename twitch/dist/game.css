@@ -132,7 +132,8 @@ footer{color:#fff;font-size:13px;text-align:center;text-shadow:0 1px 2px rgba(0,
    COLOUR and TYPE: lobby blue, yellow accent, rarity colours; heavy skewed condensed display type.
    LAYOUT: same single column as before so every mode still works; theme only layers on top. */
 :root{--storm:#7b2ff7;--storm2:#c04bff;--shield:#3fb6ff;--dmg:#ffe14a}
-body{background:linear-gradient(180deg,#0f4fc4 0%,#2f86f0 45%,#7cc4ff 85%,#c9e7ff 100%) fixed;overflow-x:clip}
+html{background:#0f4fc4 linear-gradient(180deg,#0f4fc4 0%,#2f86f0 45%,#7cc4ff 85%,#c9e7ff 100%) fixed;min-height:100%}
+body{background:transparent;overflow-x:clip}
 .fn-sky{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
 .fn-sky::before{content:"";position:absolute;inset:-50%;background:repeating-conic-gradient(from 0deg at 50% 0%,rgba(255,255,255,.07) 0 6deg,transparent 6deg 14deg)}
 .fn-clouds{position:absolute;left:0;width:200%;height:100%;display:flex;animation:fnDrift 140s linear infinite}
