@@ -16,6 +16,11 @@ export const EGGS = [
   ["title", "Mythic Title", "Upgraded the title to Mythic"],
   ["party", "Lobby Party", "Started a lobby party"],
   ["driver", "Good Manners", "Thanked the bus driver"],
+  ["owl", "Night Owl", "Finished the Daily Drop after midnight"],
+  ["fullmoon", "Full Moon", "Tapped the full moon"],
+  ["bus", "Bus Spotter", "Spotted the Battle Bus flying over"],
+  ["llama", "Loot Llama", "Found the loot llama on the island"],
+  ["bird", "Early Bird", "Finished the Daily Drop at dawn"],
 ];
 
 export const MILES = [
@@ -29,6 +34,8 @@ export const MILES = [
   ["myth", "Mythic Mind", "Answer 10 Impossible questions right in daily sets", s => [s.topRight, 10]],
   ["s10", "Hot Streak", "Reach a 10-question streak in Endless", s => [s.best, 10]],
   ["s25", "Unstoppable", "Reach a 25-question streak in Endless", s => [s.best, 25]],
+  ["w7", "Locked In", "Play the Daily Drop 7 days in a row", s => [s.streak, 7]],
+  ["w30", "No Days Off", "Play the Daily Drop 30 days in a row", s => [s.streak, 30]],
   ["hunter", "Secret Hunter", "Find every secret", s => [s.secrets, EGGS.length]],
 ];
 
@@ -80,6 +87,7 @@ export function statsFrom(keys, tierOf = () => null) {
     fullDay: list.some(d => SETS.every(k => d[k])) ? 1 : 0,
     perfectDay: list.some(d => SETS.every(k => perfect(d[k]))) ? 1 : 0,
     topRight, best: endless.best || 0,
+    streak: (() => { const ds = Object.keys(days).filter(d => days[d].main).sort(); let b = 0, r = 0; ds.forEach((d, i) => { r = i && Math.round((Date.parse(d) - Date.parse(ds[i - 1])) / 864e5) === 1 ? r + 1 : 1; b = Math.max(b, r); }); return b; })(),
     secrets: Array.isArray(secrets) ? secrets.filter(id => EGGS.some(e => e[0] === id)).length : 0,
   };
 }
