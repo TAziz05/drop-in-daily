@@ -750,6 +750,95 @@ results=function(fresh){_r(fresh);
   else{bar.style.transition="none";bar.style.width=pct+"%"}
 };
 setView(view==="daily"?"main":view);
+/* >>> day-night cycle */
+/* ===== Real-time sky: dawn, day, dusk and night follow the player's own clock =====
+   Sunrise and sunset are estimated from the date (for about 40° N, close for most of the US and Europe), so there is
+   no location prompt. The sky colours blend smoothly between four looks, and the stars, moon, sun and clouds follow. */
+const SKY=(()=>{
+  const PAL={"night": ["#060b26", "#0f1d55", "#24397f", "#2a4185", "#243a7b"], "dawn": ["#33378f", "#c8679a", "#ffb071", "#9c6f9c", "#a678a0"], "day": ["#0f4fc4", "#2f86f0", "#a8d8ff", "#5a92bd", "#669cc4"], "dusk": ["#27266f", "#c0507a", "#ff9452", "#8c5786", "#965e8a"]};
+  const doy=d=>Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);
+  function sunTimes(d){
+    const lat=40*Math.PI/180,decl=23.44*Math.PI/180*Math.sin(2*Math.PI*(284+doy(d))/365);
+    const c=(Math.sin(-0.833*Math.PI/180)-Math.sin(lat)*Math.sin(decl))/(Math.cos(lat)*Math.cos(decl));
+    const half=Math.acos(Math.max(-1,Math.min(1,c)))*12/Math.PI;
+    const y=d.getFullYear(),std=Math.max(new Date(y,0,1).getTimezoneOffset(),new Date(y,6,1).getTimezoneOffset());
+    const noon=12.2+(d.getTimezoneOffset()<std?1:0);          // solar noon on the clock, with daylight saving
+    return {rise:noon-half,set:noon+half};
+  }
+  const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),mix=(a,b,t)=>{const A=hex(a),B=hex(b);return "#"+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,"0")).join("")};
+  const ease=t=>t*t*(3-2*t);
+  // keyframes through the day: [hour, look, nightness, warmth]
+  function frames(rise,set){return [[rise-1.3,"night",1,0],[rise-.35,"dawn",.55,1],[rise+.9,"day",0,0],[set-.9,"day",0,0],[set+.35,"dusk",.55,1],[set+1.3,"night",1,0]]}
+  let forced=null,last=null;
+  function state(d){
+    const now=d||new Date(),{rise,set}=sunTimes(now);let h=forced!=null?forced:now.getHours()+now.getMinutes()/60;
+    const F=frames(rise,set);let a,b,t;
+    if(h<F[0][0]||h>=F[F.length-1][0]){a=b=F[0];t=0}
+    else for(let i=0;i<F.length-1;i++)if(h>=F[i][0]&&h<F[i+1][0]){a=F[i];b=F[i+1];t=ease((h-a[0])/(b[0]-a[0]));break}
+    const pa=PAL[a[1]],pb=PAL[b[1]];
+    return {top:mix(pa[0],pb[0],t),mid:mix(pa[1],pb[1],t),bot:mix(pa[2],pb[2],t),isle:pa[3]?mix(pa[3],pb[3],t):null,isle2:pa[4]?mix(pa[4],pb[4],t):null,night:a[2]+(b[2]-a[2])*t,warm:a[3]+(b[3]-a[3])*t,hour:h,rise,set,
+      phase:(a[1]===b[1]?a[1]:(t<.5?a[1]:b[1]))};
+  }
+  function paint(){
+    const s=state(),r=document.documentElement.style;last=s;
+    r.setProperty("--sky-top",s.top);r.setProperty("--sky-mid",s.mid);r.setProperty("--sky-bot",s.bot);if(s.isle){r.setProperty("--isle",s.isle);r.setProperty("--isle2",s.isle2)}
+    // the sun crosses the sky from sunrise to sunset; the moon crosses it overnight (left = east, right = west)
+    const arc=(p)=>({x:6+88*p,y:42-36*Math.sin(Math.PI*p)});   // one smooth arc that carries on below the horizon
+    const dayLen=s.set-s.rise,ps=(s.hour-s.rise)/dayLen,pm=(((s.hour-s.set)%24)+24)%24/(24-dayLen);
+    const sun=arc(Math.min(1.35,Math.max(-.35,ps))),moon=arc(pm>1.5?Math.max(-.35,pm-(24/(24-dayLen))):Math.min(1.35,pm));
+    r.setProperty("--sun-x",sun.x.toFixed(2)+"vw");r.setProperty("--sun-y",sun.y.toFixed(2)+"vh");
+    r.setProperty("--moon-x",moon.x.toFixed(2)+"vw");r.setProperty("--moon-y",moon.y.toFixed(2)+"vh");
+    r.setProperty("--night",s.night.toFixed(3));r.setProperty("--day",(1-s.night).toFixed(3));r.setProperty("--warm",s.warm.toFixed(3));
+    const tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.content=s.top;
+    document.documentElement.dataset.sky=s.phase;
+  }
+  paint();setInterval(()=>{if(forced==null)paint()},60000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&forced==null)paint()});
+  return {now:()=>last||state(),isNight:()=>(last||state()).night>.5,set:h=>{forced=h;paint()},live:()=>{forced=null;paint()},sunTimes};
+})();
+window.SKY=SKY;
+
+/* Drop-In's sky decorations for the day/night cycle: stars, tonight's real moon, a sun glow and a warm dawn/dusk glow */
+{const css=document.createElement("style");css.textContent=`
+html{background:var(--sky-top) linear-gradient(180deg,var(--sky-top) 0%,var(--sky-mid) 52%,var(--sky-bot) 100%) fixed!important}
+.fn-sky::before{opacity:calc(var(--day) + var(--warm)*.5);background:repeating-conic-gradient(from 0deg at var(--sun-x,50vw) var(--sun-y,0vh),rgba(255,255,255,.07) 0 6deg,transparent 6deg 14deg)!important}
+.fn-glow{position:absolute;left:-20%;right:-20%;bottom:-10%;height:75%;background:radial-gradient(ellipse at 50% 100%,rgba(255,170,90,.55),rgba(255,120,140,.25) 45%,transparent 70%);opacity:var(--warm)}
+.fn-sun{position:absolute;left:var(--sun-x,50vw);top:var(--sun-y,0vh);width:280px;height:280px;margin:-140px 0 0 -140px;border-radius:50%;background:radial-gradient(circle,rgba(255,250,220,.9) 0 18%,rgba(255,240,180,.35) 32%,transparent 66%);opacity:calc((var(--day) - .3)*1.3)}
+.fn-stars{position:absolute;inset:0;opacity:var(--night)}
+.fn-stars i{position:absolute;inset:0;background-image:radial-gradient(2px 2px at 8% 14%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 22% 38%,#fff 50%,transparent 51%),radial-gradient(2px 2px at 41% 9%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 63% 27%,#fff 50%,transparent 51%),radial-gradient(2px 2px at 79% 12%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 91% 41%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 33% 58%,#fff 50%,transparent 51%),radial-gradient(2px 2px at 56% 49%,#fff 50%,transparent 51%);background-size:460px 460px;animation:fnTwinkle 3s ease-in-out infinite}
+.fn-stars i+i{background-size:330px 330px;background-position:90px 60px;opacity:.7;animation-delay:-1.5s}
+@keyframes fnTwinkle{50%{opacity:.4}}
+.fn-moon{position:absolute;left:var(--moon-x,82vw);top:var(--moon-y,7vh);margin:-37px 0 0 -37px;width:74px;height:74px;opacity:calc((var(--night) - .45)*2.2);filter:drop-shadow(0 0 14px rgba(255,246,210,.35)) drop-shadow(0 0 36px rgba(200,220,255,.2))}
+.fn-moon svg{width:100%;height:100%;display:block}
+.fn-clouds{filter:brightness(calc(1 - var(--night)*.5)) saturate(calc(1 - var(--night)*.4)) sepia(calc(var(--warm)*.4))}
+.fn-isle{position:absolute;left:0;right:0;bottom:15vh;height:16vh;min-height:70px}
+.fn-isle svg{width:100%;height:100%;display:block}
+.fn-isle .far{fill:var(--isle,#6fa7c9)}.fn-isle .near{fill:var(--isle2,#4f8f8a)}
+.fn-isle .shore{fill:none;stroke:rgba(255,255,255,calc(.35 - var(--night)*.2));stroke-width:2}
+.fn-isle .lights{opacity:calc((var(--night) - .3)*1.5)}
+@media (max-width:600px){.fn-isle{height:11vh;bottom:15vh}}
+@media (prefers-reduced-motion:reduce){.fn-stars i{animation:none}}`;document.head.appendChild(css);
+ const add=(cls,html="")=>{const el=document.createElement("div");el.className=cls;el.innerHTML=html;return el};
+ sky.prepend(add("fn-stars","<i></i><i></i>"),add("fn-moon"),add("fn-sun"),add("fn-glow"));
+ const syn=29.530588853,ref=Date.UTC(2000,0,6,18,14)/864e5,p=((((Date.now()/864e5-ref)%syn)+syn)%syn)/syn;
+ const k=Math.cos(2*Math.PI*p),rx=(40*Math.abs(k)).toFixed(2),wax=p<.5;
+ const lit=`M50 10A40 40 0 0 ${wax?1:0} 50 90A${rx} 40 0 0 ${wax?(k>0?0:1):(k>0?1:0)} 50 10Z`;
+ const CR=[[38,36,6],[62,30,3.5],[60,60,7],[34,63,4]];
+ const surf=(f,o)=>CR.map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" opacity="${o}"/>`).join("");
+ sky.querySelector(".fn-moon").innerHTML=`<svg viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="fnml" cx="40%" cy="38%" r="65%"><stop offset="0" stop-color="#ffffff"/><stop offset=".75" stop-color="#e9eefc"/><stop offset="1" stop-color="#c9d3ef"/></radialGradient><clipPath id="fnmc"><path d="${lit}"/></clipPath></defs>
+  <circle cx="50" cy="50" r="40" fill="#1a2a66"/>${surf("#14215a",.9)}<path d="${lit}" fill="url(#fnml)"/><g clip-path="url(#fnmc)">${surf("#b8c3e6",.8)}</g></svg>`
+ /* one made-up island far off on the horizon: a big mountain toward the right, smaller peaks and hills stepping down to the left,
+    tapering into the sea at both ends. It takes on the sky's colours and shows a few lights after dark. */
+ {const land="M150 120C190 119 225 116 260 113C290 110 310 106 335 105C365 104 385 108 410 107C440 106 460 100 490 98C520 96 540 101 570 100C600 99 625 93 655 91C685 89 705 94 735 92C762 90 780 84 805 80L830 76L852 81C872 85 892 86 915 83C940 80 960 72 985 66L1012 58L1036 65C1052 70 1070 72 1090 68C1115 63 1140 54 1170 44L1210 30L1240 20L1262 15L1286 22L1316 34C1340 46 1360 60 1385 74C1410 88 1440 100 1470 108C1500 115 1530 118 1560 120Z";
+  const shore="M150 120C190 119 225 116 260 113M1470 108C1500 115 1530 118 1560 120";
+  const lights=[[372,104],[520,97],[700,89],[905,82],[1060,68],[1190,40],[1262,17],[1350,58],[1440,96]].map(([x,y])=>`<rect x="${x}" y="${y}" width="3.5" height="3.5" rx="1" fill="#ffd979"/>`).join("");
+  const isle=document.createElement("div");isle.className="fn-isle";
+  isle.innerHTML=`<svg preserveAspectRatio="xMidYMax meet" aria-hidden="true"><path class="far" d="${land}"/><path class="shore" d="${shore}"/><g class="lights">${lights}</g></svg>`;
+  const svg=isle.firstChild,fit=()=>svg.setAttribute("viewBox",innerWidth<600?"620 0 980 122":"80 0 1520 122");  // phones zoom in on the mountain end
+  fit();addEventListener("resize",fit);
+  sky.querySelector(".fn-storm").before(isle)}}
+
+/* <<< day-night cycle */
 }
 </script>
 
@@ -834,7 +923,7 @@ function makeAch(C){
   function render(){
     const st=stats(),done=earned(st),total=C.miles.length+C.eggs.length,have=done.length+found.size,pct=Math.round(100*have/total);
     app.innerHTML=`<div id="ach-root"><h2>Achievements</h2><p class="muted">${have} of ${total} unlocked. Milestones come from playing; secrets stay hidden until you find them.</p>
-     <div class="ach-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>
+     <div class="ach-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>${window.YS?YS.mineHTML():""}
      <h3 class="ach-h">Milestones</h3><ul class="ach-list">${C.miles.map(m=>{const [c,g]=prog(m,st),ok=c>=g;
        return `<li class="${ok?"":"no"}">${C.medal(ok,"mile")}<div class="ach-txt"><b>${m[1]}</b><span>${m[2]}</span>${!ok&&g>1?`<div class="ach-mini"><span style="width:${100*c/g}%"></span></div><span class="ach-n">${c.toLocaleString()}/${g.toLocaleString()}</span>`:""}</div></li>`}).join("")}</ul>
      <h3 class="ach-h">Secrets <small>${found.size}/${C.eggs.length}</small></h3><ul class="ach-list">${C.eggs.map(([id,n,d,h])=>found.has(id)
@@ -855,7 +944,12 @@ const EGGS=[
  ["storm","Storm Chaser","Poked the storm until it surged","The purple wall at the bottom doesn't like being touched."],
  ["title","Mythic Title","Upgraded the title to Mythic","The game's name looks tappable. Keep going."],
  ["party","Lobby Party","Started a lobby party","An old cheat code, or hold the date for a couple of seconds."],
- ["driver","Good Manners","Thanked the bus driver","While dropping, someone up front deserves a thank-you."]];
+ ["driver","Good Manners","Thanked the bus driver","While dropping, someone up front deserves a thank-you."],
+ ["owl","Night Owl","Finished the Daily Drop after midnight","Some drops happen while everyone else is asleep."],
+ ["fullmoon","Full Moon","Tapped the full moon","Once a month, the moon is worth a closer look."],
+ ["bus","Bus Spotter","Spotted the Battle Bus flying over","Every so often, something big crosses the sky. Tap it."],
+ ["llama","Loot Llama","Found the loot llama on the island","Something colorful sometimes grazes on the island."],
+ ["bird","Early Bird","Finished the Daily Drop at dawn","Some drops happen just as the sun comes up."]];
 let tEl=null,tTimer,tQueue=[];
 function toast(title,html,c="#ffd53d",ms=7000){if(tEl){tQueue.push([title,html,c,ms]);return}
   const d=document.createElement("div");d.className="egg-toast";d.setAttribute("role","status");d.style.setProperty("--c",c);
@@ -876,7 +970,9 @@ const ACH=makeAch({pfx:"dropin",dayRe:/^dropin3:(\d{4}-\d{2}-\d{2}):(main|e|m|h|
    ["myth","Mythic Mind","Answer 10 Impossible questions right in daily sets",s=>[s.topRight,10]],
    ["s10","Hot Streak","Reach a 10-question streak in Endless",s=>[s.best,10]],
    ["s25","Unstoppable","Reach a 25-question streak in Endless",s=>[s.best,25]],
-   ["hunter","Secret Hunter","Find every secret",s=>[s.secrets,5]]]});
+   ["w7","Locked In","Play the Daily Drop 7 days in a row",s=>[s.streak,7]],
+   ["w30","No Days Off","Play the Daily Drop 30 days in a row",s=>[s.streak,30]],
+   ["hunter","Secret Hunter","Find every secret",s=>[s.secrets,EGGS.length]]]});
 window.gameAch=ACH;
 const secret=id=>ACH.secret(id);
 const fact=()=>{const pool=Q.filter(q=>(q.t==="e"||q.t==="m")&&!q.clue&&q.q.length<130&&!/this season|these|this one/i.test(q.q)),q=pool[Math.random()*pool.length|0];return `${esc(q.q)} <strong>${esc(q.a)}</strong>. <span class="src">${srcLink(q.s)}</span>`};
@@ -942,6 +1038,136 @@ date.addEventListener("contextmenu",e=>e.preventDefault());
 app.addEventListener("click",e=>{const a=e.target.closest(".fn-alive");if(!a)return;window.SND&&SND.play("driver");
   const f=document.querySelector(".fn-feed");if(f){const d=document.createElement("div");d.style.setProperty("--c","#ffe14a");d.innerHTML=`<b>You</b><span>thanked the bus driver</span>`;f.appendChild(d);setTimeout(()=>d.remove(),4100)}
   secret("driver")});
+/* >>> stats and new secrets */
+/* ===== Your Daily stats (from this device), and how everyone did today (anonymous, from the game's server) ===== */
+const YS=(()=>{
+  const DAYRE=new RegExp("^dropin3:(\\d{4}-\\d{2}-\\d{2}):main$"),API=location.hostname.endsWith("discordsays.com")?"":"https://drop-in-daily-bot.towfiq-aziz11.workers.dev";
+  const t=d=>Date.parse(d+"T12:00:00Z"),gap=(a,b)=>Math.round((t(b)-t(a))/864e5);
+  function mine(){const days=[];
+    try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i),m=k&&k.match(DAYRE);if(!m)continue;const v=store.get(k);if(v&&Array.isArray(v.marks)&&v.marks.length)days.push({d:m[1],s:v.marks.filter(Boolean).length,n:v.marks.length})}}catch(e){}
+    days.sort((a,b)=>a.d<b.d?-1:1);
+    let best=0,run=0;days.forEach((x,i)=>{run=i&&gap(days[i-1].d,x.d)===1?run+1:1;best=Math.max(best,run)});
+    let cur=0;const last=days[days.length-1];
+    if(last&&gap(last.d,dayKey)<=1){cur=1;for(let i=days.length-1;i>0&&gap(days[i-1].d,days[i].d)===1;i--)cur++}
+    const dist=[0,0,0,0,0,0];days.forEach(x=>{if(x.n===5)dist[x.s]++});
+    let full=0;try{const sets=["main","e","m","h","x"];for(const x of days)if(sets.every(k=>{const v=store.get(`dropin3:${x.d}:${k}`);return v&&v.marks&&v.marks.length&&v.marks.every(Boolean)}))full++}catch(e){}
+    return {played:days.length,perfect:dist[5],full,cur,best,dist,today:(days.find(x=>x.d===dayKey)||{}).s};
+  }
+  const bars=(dist,hi,unit)=>{const max=Math.max(1,...dist);return `<div class="ys-dist">${[5,4,3,2,1,0].map(s=>`<div class="ys-row${s===hi?" hi":""}"><span class="ys-l">${s}/5</span><span class="ys-b"><i style="width:${Math.max(dist[s]?6:0,100*dist[s]/max)}%"></i></span><span class="ys-c">${dist[s]}${unit}</span></div>`).join("")}</div>`};
+  function mineHTML(){const m=mine();if(!m.played)return `<section class="ys"><h3>Your Daily Drop stats</h3><p class="ys-note">Finish today's Daily Drop to start your stats.</p></section>`;
+    return `<section class="ys"><h3>Your Daily Drop stats</h3>
+     <div class="ys-grid"><div><b>${m.played}</b><span>Played</span></div><div><b>${m.perfect}</b><span>Perfect 5/5</span></div><div><b>${m.cur}</b><span>Current streak</span></div><div><b>${m.best}</b><span>Best streak</span></div></div>
+     ${bars(m.dist,m.today,"")}${m.full?`<p class="ys-note">Perfect 25/25 days: <b>${m.full}</b></p>`:""}</section>`}
+  // a random ID for this device, so its result counts once; nothing else about the player is sent
+  const dev=()=>{let v=store.get("dropin:dev");if(typeof v!=="string"||!/^[a-z0-9]{24}$/.test(v)){v=Array.from(crypto.getRandomValues(new Uint8Array(24)),b=>"abcdefghijklmnopqrstuvwxyz0123456789"[b%36]).join("");store.set("dropin:dev",v)}return v};
+  async function everyone(post){
+    try{const opt=post?{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({dev:dev(),ids:S.qs.map(q=>q.id),marks:S.marks})}:{};
+      const r=await fetch(API+(post?"/stats/result":"/stats/daily"),opt);return r.ok?await r.json():null}catch(e){return null}}
+  function everyoneHTML(g,score){
+    if(!g)return "";
+    if(!g.dist)return `<section class="gs"><h3>How everyone did today</h3><p class="ys-note">Everyone's results show up once ${g.min} players have finished today's Daily Drop (${g.n} so far). Check back later!</p></section>`;
+    const lower=g.dist.slice(0,score).reduce((a,b)=>a+b,0),same=Math.round(100*g.dist[score]/g.n);
+    const line=score===5?`You're one of the <b>${same}%</b> who got a perfect 5/5.`:score===0?`Tough one! <b>${same}%</b> of players also got 0/5.`:`You did better than <b>${Math.round(100*lower/g.n)}%</b> of players.`;
+    return `<section class="gs"><h3>How everyone did today</h3><p>${line} <span class="ys-note">${g.n} players</span></p>${bars(g.dist,score,"")}</section>`}
+  async function addToResults(fresh){
+    if(!S||S.mode!=="main"||!S.qs||S.marks.length<S.qs.length)return;
+    const score=S.marks.filter(Boolean).length,box=document.createElement("div");box.className="ys-wrap";box.innerHTML=mineHTML()+`<div class="gs-slot"></div>`;app.appendChild(box);
+    const g=await everyone(!!fresh&&!window.dropinDone);if(!box.isConnected||!g)return;
+    box.querySelector(".gs-slot").innerHTML=everyoneHTML(g,score);
+    if(g.q)app.querySelectorAll(".recap li").forEach((li,i)=>{const tx=li.lastElementChild||li;if(g.q[i]!=null&&!li.querySelector(".gs-pct"))tx.insertAdjacentHTML("beforeend",`<span class="gs-pct">${g.q[i]}% of players got this</span>`)})}
+  const css=document.createElement("style");css.textContent=`
+.ys-wrap{margin-top:18px;display:grid;gap:14px}
+.ys,.gs{background:var(--ys-bg);border:var(--ys-border);border-radius:var(--ys-r);padding:14px 16px;color:var(--ys-ink)}
+.ys h3,.gs h3{margin:0 0 10px;font:var(--ys-h)}
+.ys p,.gs p{margin:0 0 8px}
+.ys-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;margin-bottom:10px}
+.ys-grid b{display:block;font:var(--ys-num)}.ys-grid span{font-size:12px;opacity:.75}
+.ys-dist{display:grid;gap:4px}
+.ys-row{display:grid;grid-template-columns:34px 1fr 30px;align-items:center;gap:8px;font-size:13px}
+.ys-b{height:16px;background:var(--ys-track);border-radius:4px;overflow:hidden}.ys-b i{display:block;height:100%;background:var(--ys-bar);border-radius:4px}
+.ys-row.hi .ys-b i{background:var(--ys-acc)}.ys-row.hi .ys-l{font-weight:800}
+.ys-c{text-align:right;opacity:.8}.ys-note{font-size:13px;opacity:.75}
+.gs-pct{display:block;font-size:12px;opacity:.7;margin-top:2px}
+@media (max-width:420px){.ys-grid b{font-size:22px}}`;document.head.appendChild(css);
+  return {mine,mineHTML,addToResults};
+})();
+window.YS=YS;
+const _rys=results;results=function(fresh){_rys.apply(this,arguments);YS.addToResults(fresh);
+  // Night Owl: finish the daily set between midnight and 4 am
+  // (uses the sky clock, which is the real time in the game; the preview's time bar can move it for testing)
+  if(fresh&&S&&S.mode==="main"){const d=new Date(),h=window.SKY?SKY.now().hour:d.getHours()+d.getMinutes()/60;
+    if(h<4)setTimeout(()=>secret("owl"),1200);
+    // Early Bird: finish the daily set at dawn, from an hour before sunrise to an hour after
+    else if(window.SKY){const st=SKY.sunTimes(d);if(h>=st.rise-1&&h<=st.rise+1)setTimeout(()=>secret("bird"),1200)}}};
+// the real moon phase (0 = new, 0.5 = full); a full moon is within about a day of 0.5
+const moonPhase=()=>{const syn=29.530588853,ref=Date.UTC(2000,0,6,18,14)/864e5;return((((Date.now()/864e5-ref)%syn)+syn)%syn)/syn};
+const fullMoon=()=>window.__fullMoon===true||Math.abs(moonPhase()-.5)<.034;
+/* Drop-In: the island comes closer once you've dropped in, the Battle Bus flies over, a loot llama grazes on the island,
+   and the full moon is worth a tap */
+{const css=document.createElement("style");css.textContent=`
+:root{--ys-bg:#fff;--ys-border:2px solid #cfdcf3;--ys-r:6px;--ys-ink:#0d1b3d;--ys-h:italic 400 22px/1 Anton,Impact,sans-serif;--ys-num:italic 400 28px/1 Anton,Impact,sans-serif;--ys-track:#e6eefb;--ys-bar:#7d9cd6;--ys-acc:#f2c200}
+.ys h3,.gs h3{text-transform:uppercase;letter-spacing:.5px}
+.fn-isle{transition:transform 1.6s cubic-bezier(.2,.8,.2,1),bottom 1.6s cubic-bezier(.2,.8,.2,1);transform-origin:72% 100%}
+body.fn-landed .fn-isle{transform:scale(2.1)}
+.fn-isle .llama{pointer-events:auto;cursor:pointer;opacity:0;transition:opacity .8s}
+.fn-isle .llama.on{opacity:1}
+.fn-bus{position:fixed;z-index:3;top:9vh;left:-200px;width:150px;height:110px;border:0;padding:0;background:none;cursor:pointer;filter:drop-shadow(0 6px 10px rgba(0,0,40,.25))}
+.fn-bus svg{width:100%;height:100%;display:block}
+.fn-moon.glow{animation:fnMoonGlow 2.4s ease-out}
+@keyframes fnMoonGlow{0%{transform:scale(1)}20%{transform:scale(1.35);filter:drop-shadow(0 0 40px #fff6c8) drop-shadow(0 0 90px #c9a7ff)}100%{transform:scale(1)}}
+.fn-confetti{position:fixed;z-index:1002;width:8px;height:8px;border-radius:2px;pointer-events:none}`;document.head.appendChild(css);
+ const landed=on=>document.body.classList.toggle("fn-landed",on);
+ const _qL=question,_eqL=endlessQ,_rL=results,_svL=setView,_evL=endlessView,_eeL=endlessEnd;
+ question=function(){_qL.apply(this,arguments);landed(true)};endlessQ=function(){_eqL.apply(this,arguments);landed(true)};
+ results=function(){_rL.apply(this,arguments);landed(false)};setView=function(){_svL.apply(this,arguments);landed(false)};
+ endlessView=function(){_evL.apply(this,arguments);landed(false)};endlessEnd=function(){_eeL.apply(this,arguments);landed(false)};
+
+ /* loot llama: sometimes grazing on the island; tap it */
+ const svg=document.querySelector(".fn-isle svg");
+ if(svg){const g=document.createElementNS("http://www.w3.org/2000/svg","g");g.setAttribute("class","llama");g.setAttribute("transform","translate(1340 58) scale(1.7)");
+   g.innerHTML=`<rect x="-30" y="-40" width="84" height="70" fill="transparent"/><path d="M0 0h14v-3h3v-10h4v3h2v-4h-2v-3h-4v3h-1v11H0z" fill="#b25fe6"/><rect x="1" y="0" width="3" height="5" fill="#8a3fc2"/><rect x="10" y="0" width="3" height="5" fill="#8a3fc2"/><rect x="3" y="-2" width="4" height="2" fill="#5fd0ff"/><rect x="8" y="-2" width="3" height="2" fill="#ffd34d"/><rect x="18" y="-12" width="1.5" height="1.5" fill="#1a0b2e"/>`;
+   svg.appendChild(g);
+   const show=()=>{if(!g.classList.contains("on")&&document.visibilityState==="visible")g.classList.add("on")};
+   if(Math.random()<.5)setTimeout(show,20000+Math.random()*40000);
+   // the page's content layer sits above the island, so taps are matched by position (with some room around the llama)
+   document.addEventListener("click",e=>{if(!g.classList.contains("on")||e.target.closest("button,a,input,select,textarea,label,.tabs,.egg-toast"))return;
+     const r=g.getBoundingClientRect(),pad=14;if(e.clientX<r.left-pad||e.clientX>r.right+pad||e.clientY<r.top-pad||e.clientY>r.bottom+pad)return;e.stopImmediatePropagation();smash()},true);
+   function smash(){g.classList.remove("on");
+     const r=g.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,cols=["#b25fe6","#5fd0ff","#ffd34d","#ff6fb1","#7dff9a"];
+     window.SND&&SND.play("crate");
+     if(!R)for(let k=0;k<26;k++){const c=document.createElement("div");c.className="fn-confetti";c.style.background=cols[k%5];c.style.left=cx+"px";c.style.top=cy+"px";document.body.appendChild(c);
+       const a=Math.random()*Math.PI*2,d=60+Math.random()*120;c.animate([{transform:"translate(0,0) rotate(0)",opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d-60}px) rotate(${Math.random()*720}deg)`,opacity:0}],{duration:1100+Math.random()*500,easing:"cubic-bezier(.2,.8,.3,1)"}).onfinish=()=>c.remove()}
+     toast("Loot llama!","You smashed the llama on the island. Loot everywhere.","#b25fe6");secret("llama");
+     setTimeout(()=>{if(Math.random()<.5)show()},180000)}}
+ window.__showLlama=()=>{const g=document.querySelector(".fn-isle .llama");if(g)g.classList.add("on")};
+
+ /* the Battle Bus: now and then it flies over; tap it */
+ const busSVG=`<svg viewBox="0 0 150 110" aria-hidden="true"><ellipse cx="75" cy="30" rx="34" ry="28" fill="#4fb3ff" stroke="#0b3f8f" stroke-width="3"/><path d="M48 22h54M45 34h60" stroke="#0b3f8f" stroke-width="2" opacity=".35"/>
+  <path d="M55 54 48 70M95 54l7 16" stroke="#0b3f8f" stroke-width="2.5"/><rect x="22" y="68" width="106" height="30" rx="8" fill="#2f86f0" stroke="#0b3f8f" stroke-width="3"/>
+  <rect x="30" y="74" width="16" height="11" rx="2" fill="#bfe6ff"/><rect x="52" y="74" width="16" height="11" rx="2" fill="#bfe6ff"/><rect x="74" y="74" width="16" height="11" rx="2" fill="#bfe6ff"/><rect x="96" y="74" width="24" height="11" rx="2" fill="#bfe6ff"/>
+  <rect x="22" y="89" width="106" height="4" fill="#ffd53d"/><circle cx="42" cy="99" r="6" fill="#0d1b3d"/><circle cx="108" cy="99" r="6" fill="#0d1b3d"/></svg>`;
+ let busOn=false;
+ function flyBus(){if(busOn||playing()||document.visibilityState!=="visible")return;busOn=true;
+   const b=document.createElement("button");b.className="fn-bus";b.setAttribute("aria-label","The Battle Bus");b.innerHTML=busSVG;document.body.appendChild(b);
+   window.SND&&SND.play("busHorn");
+   const fly=b.animate([{transform:"translate(0,0)"},{transform:`translate(${innerWidth*.5+100}px,-14px)`,offset:.5},{transform:`translate(${innerWidth+400}px,6px)`}],{duration:R?10:18000,easing:"linear"});
+   fly.onfinish=()=>{b.remove();busOn=false};
+   b.onclick=()=>{if(b.dataset.hit)return;b.dataset.hit=1;window.SND&&SND.play("driver");
+     b.animate([{transform:"scale(1)"},{transform:"scale(1.15) rotate(-4deg)"},{transform:"scale(1)"}],{duration:500,composite:"add"});
+     toast("Battle Bus spotted","The bus driver honks back at you.","#2f86f0");secret("bus")}}
+ (function busLoop(){setTimeout(()=>{if(Math.random()<.3)flyBus();busLoop()},70000+Math.random()*70000)})();
+ window.__flyBus=flyBus;
+
+ /* full moon: tap it on the night it's full */
+ document.addEventListener("click",e=>{
+   if(e.target.closest("button,a,input,select,textarea,label,.tabs,.egg-toast,#app"))return;
+   const m=document.querySelector(".fn-moon");if(!m||!window.SKY||!SKY.isNight())return;const r=m.getBoundingClientRect();
+   if(e.clientX<r.left-12||e.clientX>r.right+12||e.clientY<r.top-12||e.clientY>r.bottom+12)return;
+   e.stopImmediatePropagation();m.classList.remove("glow");void m.offsetWidth;m.classList.add("glow");
+   if(fullMoon()){window.SND&&SND.play("mythic");toast("Full moon","The full moon glows back at you. See you next month.","#c9a7ff");secret("fullmoon")}
+ },true);
+}
+/* <<< stats and new secrets */
 }
 </script>
 <script>
@@ -949,7 +1175,7 @@ app.addEventListener("click",e=>{const a=e.target.closest(".fn-alive");if(!a)ret
    Off by default; the speaker button in the corner turns effects and music on, and the choice is saved on this device. ===== */
 (function(){
 "use strict";
-const G={"pfx": "dropin", "font": "\"Barlow\",system-ui,sans-serif", "bg": "#0b3f8f", "fg": "#fff", "edge": "#062a66", "accent": "#ffd53d", "skipTap": ".egg-crate,.fn-jump", "songs": {"lobby": "fnMenu", "match": "fn", "og": "fnOGm", "endless": "fnOG"}};
+const G={"pfx": "dropin", "font": "\"Barlow\",system-ui,sans-serif", "bg": "#0b3f8f", "fg": "#fff", "edge": "#062a66", "accent": "#ffd53d", "skipTap": ".egg-crate,.fn-jump", "songs": {"lobby": "fnMenu", "match": "fn", "og": "fnOGm", "endless": "fnOG"}, "musicBase": "music/", "music": {}};
 const noop=()=>{};
 const SND={play:noop,music:noop,on:()=>false};window.SND=SND;
 const AC=typeof window!=="undefined"&&(window.AudioContext||window.webkitAudioContext);
@@ -957,6 +1183,8 @@ if(!AC||typeof document==="undefined"||!document.body)return;
 const KEY=G.pfx+":sound";
 let st={fx:false,mu:false,vol:.8};try{Object.assign(st,JSON.parse(localStorage.getItem(KEY))||{})}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+let NIGHT=0,nightLP,nightVerb;
+function setNight(n){NIGHT=n;if(!A||!nightLP)return;const t=A.currentTime;nightLP.frequency.setTargetAtTime(20000*Math.pow(2300/20000,n),t,.4);nightVerb.gain.setTargetAtTime(.5*n,t,.4)}
 let A=null,master,sfxBus,musRoot,musBus,noiseBuf,dry,wet,retroOn=false,holdUntil=0;
 function setRetro(on){retroOn=on;if(!A)return;const t=A.currentTime;dry.gain.setTargetAtTime(on?0:1,t,.03);wet.gain.setTargetAtTime(on?1:0,t,.03)}
 function ctx(){
@@ -970,7 +1198,11 @@ function ctx(){
   const lp=A.createBiquadFilter();lp.type="lowpass";lp.frequency.value=3800;const hp=A.createBiquadFilter();hp.type="highpass";hp.frequency.value=180;
   const pre=A.createGain();pre.gain.value=4;const post=A.createGain();post.gain.value=.3;master.connect(pre);pre.connect(crush);crush.connect(lp);lp.connect(hp);hp.connect(post);post.connect(wet);wet.connect(comp);setRetro(retroOn);
   sfxBus=A.createGain();sfxBus.gain.value=.7;sfxBus.connect(master);
-  musRoot=A.createGain();musRoot.gain.value=.27;musRoot.connect(master);musBus=musRoot;
+  musRoot=A.createGain();musRoot.gain.value=.27;musBus=musRoot;
+  // night versions of the songs: darker, softer drums, a little slower, more echo and a few twinkles, following the sky
+  nightLP=A.createBiquadFilter();nightLP.type="lowpass";nightLP.Q.value=.5;nightLP.frequency.value=20000;musRoot.connect(nightLP);nightLP.connect(master);
+  {const len=A.sampleRate*2.6,b=A.createBuffer(2,len,A.sampleRate);for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.5)}
+   const cv=A.createConvolver();cv.buffer=b;nightVerb=A.createGain();nightVerb.gain.value=0;musRoot.connect(nightVerb);nightVerb.connect(cv);cv.connect(master)}
   noiseBuf=A.createBuffer(1,A.sampleRate,A.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
   return A;
 }
@@ -985,7 +1217,7 @@ function tone({t=0,n,f,type="square",dur=.12,vol=.3,slide,bus=sfxBus,detune=0,at
   if(cut){const fl=a.createBiquadFilter();fl.type="lowpass";fl.frequency.value=cut;g.connect(fl);last=fl}else last=g;
   last.connect(bus);o.start(s);o.stop(s+dur+.05);
 }
-function noise({t=0,dur=.1,vol=.25,type="highpass",freq=6000,sweep,bus=sfxBus,q=1}){
+function noise({t=0,dur=.1,vol=.25,type="highpass",freq=6000,sweep,bus=sfxBus,q=1}){if(bus!==sfxBus&&bus!==verb.n)vol*=1-.55*NIGHT;
   const a=ctx(),s=a.currentTime+t,src=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain();
   src.buffer=noiseBuf;src.loop=true;fl.type=type;fl.frequency.setValueAtTime(freq,s);fl.Q.value=q;
   if(sweep)fl.frequency.exponentialRampToValueAtTime(sweep,s+dur);
@@ -1090,6 +1322,8 @@ D.crate=()=>{boom(0,.45);noise({dur:.18,vol:.28,type:"lowpass",freq:800});noise(
 D.titleTap=lvl=>{const n=[67,71,74,79,84][Math.max(1,Math.min(5,lvl))-1];
   noise({dur:.15,vol:.12,type:"bandpass",freq:1000,sweep:5000,q:2});tone({t:.05,n,type:"sawtooth",dur:.25,vol:.08,cut:4000,bus:verb()});tone({t:.05,n:n+12,type:"sine",dur:.35,vol:.08,bus:verb()});if(lvl>=5)D.mythic()};
 
+D.busHorn=()=>{[0,.26].forEach(t=>[349,440].forEach(f=>[-8,8].forEach(dt=>tone({t,f,type:"sawtooth",dur:.2,vol:.06,cut:1300,detune:dt,bus:verb()}))));noise({t:.1,dur:1.4,vol:.05,type:"bandpass",freq:500,sweep:900,q:.7})};
+
 /* ---- music: a small step sequencer that plans a little ahead, and skips late notes rather than cramming them in ---- */
 const SONGS={
  fnMenu:{bpm:96,steps:64,play(i,t){ // chill lobby: Fmaj7 Em7 Dm7 Cmaj7, warm keys, laid-back beat
@@ -1147,20 +1381,31 @@ const SONGS={
    if(bar===3&&half===1&&s===12)noise({t,dur:.6,vol:.06,freq:5000,bus:M});
  }}
 };
-let want="lobby",cur=null,timer=null,step=0,nextT=0;
-function schedule(){const S=SONGS[cur];if(!S)return;const dt=60/S.bpm/4,now=A.currentTime;
+let want="lobby",cur=null,timer=null,step=0,nextT=0,src=null;
+/* Songs play from small recorded loops of the same code-made music (smoother on slow devices). Until a file has loaded,
+   or if it can't load, the song is made live by the sequencer instead. */
+// Test switch: the recorded loops are only used with ?music=files in the address; everyone else gets the live code music.
+const FILEMODE=false;  // recorded loops are parked on the possible-updates branch
+const FILES=FILEMODE?(G.music||{}):{},BUF={},LOADING={};
+const decode=ab=>new Promise((res,rej)=>{const p=A.decodeAudioData(ab,res,rej);if(p&&p.then)p.then(res,rej)});
+function load(k){if(!FILES[k]||BUF[k]||LOADING[k])return LOADING[k];
+  LOADING[k]=fetch(G.musicBase+k+".mp3").then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(decode).then(b=>{BUF[k]=b;if(cur===k&&!src)startSong(k)}).catch(noop);return LOADING[k]}
+function preload(){if(!A)return;const ks=[...new Set(Object.values(G.songs))];ks.sort((a,b)=>(b===G.songs[want])-(a===G.songs[want]));ks.reduce((p,k)=>p.then(()=>load(k)),Promise.resolve())}
+function schedule(){const S=SONGS[cur];if(!S)return;const n=window.SKY?SKY.now().night:0;if(Math.abs(n-NIGHT)>.01)setNight(n);const dt=60/(S.bpm*(1-.1*NIGHT))/4,now=A.currentTime;
   if(nextT<now+.02){const skip=Math.ceil((now+.05-nextT)/dt);step=(step+skip)%S.steps;nextT+=skip*dt}
-  while(nextT<now+.6){try{S.play(step,nextT-now)}catch(e){}step=(step+1)%S.steps;nextT+=dt}}
+  while(nextT<now+.6){try{S.play(step,nextT-now);if(NIGHT>.05&&step%32===0)tone({t:nextT-now,n:[84,86,88,91,93,96][Math.random()*6|0],type:"sine",dur:1.6,vol:.03*NIGHT,att:.01,bus:musBus})}catch(e){}step=(step+1)%S.steps;nextT+=dt}}
 function startSong(k){
-  clearInterval(timer);timer=null;
+  clearInterval(timer);timer=null;if(src){const s=src;src=null;try{s.stop(A.currentTime+1.2)}catch(e){}}
   if(musBus&&musBus!==musRoot){const g=musBus;g.gain.setTargetAtTime(0,A.currentTime,.12);setTimeout(()=>{try{g.disconnect()}catch(e){}},1500)}
   musBus=musRoot;cur=k;delete SONGS.pad;if(!k)return;
   musBus=A.createGain();musBus.gain.setValueAtTime(.0001,A.currentTime);musBus.gain.setTargetAtTime(1,A.currentTime,.2);musBus.connect(musRoot);
-  step=0;nextT=A.currentTime+.12;timer=setInterval(schedule,90)}
+  const f=FILES[k],b=BUF[k];
+  if(f&&b){src=A.createBufferSource();src.buffer=b;src.loop=true;src.loopStart=f.pad;src.loopEnd=f.pad+f.L;const g=A.createGain();g.gain.value=f.gain;src.connect(g);g.connect(musBus);src.start(A.currentTime+.03,f.pad);return}
+  load(k);step=0;nextT=A.currentTime+.12;timer=setInterval(schedule,90)}
 function applyMusic(){const k=st.mu&&A&&A.state==="running"&&!document.hidden&&Date.now()>=holdUntil?(G.songs[want]||null):null;if(k!==cur)startSong(k)}
-function wake(){if(!(st.fx||st.mu))return;ctx();if(A.state!=="running")A.resume().then(applyMusic,noop);else applyMusic()}
+function wake(){if(!(st.fx||st.mu))return;ctx();if(st.mu)preload();if(A.state!=="running")A.resume().then(applyMusic,noop);else applyMusic()}
 SND.on=()=>st.fx;
-SND.state=()=>({music:cur,want,audio:A?A.state:"none"});
+SND.state=()=>({music:cur,want,audio:A?A.state:"none",file:!!src});
 SND.play=(name,...a)=>{if(!st.fx||document.hidden)return;const f=D[name];if(!f)return;ctx();if(A.state!=="running")A.resume().catch(noop);try{f(...a)}catch(e){}};
 SND.music=k=>{want=k;if(A)applyMusic()};
 SND.hold=ms=>{holdUntil=Date.now()+ms;if(A)applyMusic();setTimeout(()=>{if(A)applyMusic()},ms+50)};
