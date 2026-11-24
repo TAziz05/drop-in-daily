@@ -2,10 +2,17 @@ if(typeof Element!=="undefined"&&Element.prototype.animate){
 const R=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
 /* ---- sky ---- */
 const cloud=(x,y,s,o)=>`<g transform="translate(${x} ${y}) scale(${s})" opacity="${o}"><ellipse cx="0" cy="14" rx="70" ry="22" fill="#cfe6ff"/><circle cx="-34" cy="0" r="26" fill="#fff"/><circle cx="2" cy="-14" r="36" fill="#fff"/><circle cx="40" cy="2" r="24" fill="#fff"/><ellipse cx="0" cy="10" rx="66" ry="18" fill="#fff"/></g>`;
-const layer=(list)=>{const one=`<svg viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${list.map(c=>cloud(...c)).join("")}</svg>`;return one+one};
+/* Clouds are laid out to fit the screen: each one stays fully in view top to bottom, and a cloud drifting
+   past the edge carries on from the other side, so none get sliced in half. They also stay above the island and the storm. */
+const CLOUDS=[[[120,140,.8,.55],[520,90,.6,.5],[820,240,.9,.5],[300,420,.7,.45]],[[80,560,1.3,.95],[460,330,1.1,.9],[760,620,1.5,.95],[960,150,.9,.85]]];
+const layer=(list)=>{const W=innerWidth||1000,H=innerHeight||800,k=Math.max(W/1000,H/800),vw=W/k,vh=H/k,m=Math.min(1,Math.sqrt(vw/1000));
+  const g=list.map(([x,y,sc,o])=>{const c=sc*m,X=x*vw/1000,Y=Math.min(Math.max(y*vh/800,52*c+10),vh*(W<600?.62:.66)-38*c);return [X-vw,X,X+vw].map(xx=>cloud(xx.toFixed(1),Y.toFixed(1),c.toFixed(3),o)).join("")}).join("");
+  const one=`<svg viewBox="0 0 ${vw.toFixed(1)} ${vh.toFixed(1)}" preserveAspectRatio="none" aria-hidden="true">${g}</svg>`;return one+one};
 const sky=document.createElement("div");sky.className="fn-sky";sky.setAttribute("aria-hidden","true");
-sky.innerHTML=`<div class="fn-clouds">${layer([[120,140,.8,.55],[520,90,.6,.5],[820,240,.9,.5],[300,420,.7,.45]])}</div>
- <div class="fn-clouds b">${layer([[80,560,1.3,.95],[460,330,1.1,.9],[760,620,1.5,.95],[960,150,.9,.85]])}</div><div class="fn-storm"></div>`;
+sky.innerHTML=`<div class="fn-clouds">${layer(CLOUDS[0])}</div>
+ <div class="fn-clouds b">${layer(CLOUDS[1])}</div><div class="fn-storm"></div>`;
+{let cw=innerWidth,ch=innerHeight,tm;addEventListener("resize",()=>{clearTimeout(tm);tm=setTimeout(()=>{if(Math.abs(innerWidth-cw)<2&&Math.abs(innerHeight-ch)<80)return;cw=innerWidth;ch=innerHeight;
+  sky.querySelectorAll(".fn-clouds").forEach((d,i)=>d.innerHTML=layer(CLOUDS[i]))},200)})}
 document.body.prepend(sky);
 const feed=document.createElement("div");feed.className="fn-feed";feed.setAttribute("aria-hidden","true");document.body.appendChild(feed);
 
@@ -146,7 +153,7 @@ html{background:var(--sky-top) linear-gradient(180deg,var(--sky-top) 0%,var(--sk
 .fn-isle .far{fill:var(--isle,#6fa7c9)}.fn-isle .near{fill:var(--isle2,#4f8f8a)}
 .fn-isle .shore{fill:none;stroke:rgba(255,255,255,calc(.35 - var(--night)*.2));stroke-width:2}
 .fn-isle .lights{opacity:calc((var(--night) - .3)*1.5)}
-@media (max-width:600px){.fn-isle{height:11vh;bottom:15vh}}
+@media (max-width:600px){.fn-isle{height:15vh;bottom:19vh}}
 @media (prefers-reduced-motion:reduce){.fn-stars i{animation:none}}`;document.head.appendChild(css);
  const add=(cls,html="")=>{const el=document.createElement("div");el.className=cls;el.innerHTML=html;return el};
  sky.prepend(add("fn-stars","<i></i><i></i>"),add("fn-moon"),add("fn-sun"),add("fn-glow"));
