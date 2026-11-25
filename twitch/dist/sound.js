@@ -266,7 +266,7 @@ function startSong(k){
   if(f&&b){src=A.createBufferSource();src.buffer=b;src.loop=true;src.loopStart=f.pad;src.loopEnd=f.pad+f.L;const g=A.createGain();g.gain.value=f.gain;src.connect(g);g.connect(musBus);src.start(A.currentTime+.03,f.pad);return}
   load(k);step=0;nextT=A.currentTime+.12;timer=setInterval(schedule,90)}
 // sky events change the menu and summary music: something darker during an eclipse, scarier for a blood moon, calmer for a super or blue moon
-function moodSong(w){if(w!=="lobby"&&w!=="endless")return null;const e=window.EV&&EV.today&&EV.today();if(!e)return null;const n=window.SKY?SKY.isNight():false;
+function moodSong(w){if(w!=="lobby"&&w!=="endless")return null;if(window.__raining&&SONGS.mRain)return "mRain";const e=window.EV&&EV.today&&EV.today();if(!e)return null;const n=window.SKY?SKY.isNight():false;
   if(!n&&e.solar)return "mEclipse";if(n&&e.lunar==="total")return "mBlood";if(n&&e.lunar)return "mEclipse";if(n&&(e.supermoon||e.blue))return "mCalm";return null}
 function applyMusic(){const k=st.mu&&A&&A.state==="running"&&!document.hidden&&Date.now()>=holdUntil?(moodSong(want)||G.songs[want]||null):null;if(k!==cur)startSong(k)}
 SND.refresh=()=>{if(A)applyMusic()};setInterval(()=>{if(A&&st.mu)applyMusic()},30000);

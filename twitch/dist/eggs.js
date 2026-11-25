@@ -253,14 +253,16 @@ html.ev-solar-total .ev-dim{opacity:.5}html.ev-solar-annular .ev-dim{opacity:.18
 @keyframes evCurtain{0%{transform:skewX(-14deg) scaleY(.82) translateX(-4%);opacity:.55}50%{opacity:1}100%{transform:skewX(16deg) scaleY(1.05) translateX(6%);opacity:.7}}
 @keyframes evAwave{0%,100%{opacity:.25}20%{opacity:.9}45%{opacity:.5}70%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.ev-aurora>b,.ev-aurora i{animation:none}}
-.ev-meteor{position:fixed;z-index:2;width:170px;height:4px;border-radius:2px;pointer-events:none;background:linear-gradient(90deg,transparent,#fff 75%,#e6f0ff);box-shadow:0 0 10px #fff,0 0 20px #9cc8ff}`;
+.ev-meteors{position:absolute;left:0;right:0;top:0;overflow:hidden;pointer-events:none;-webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 78%,transparent)}
+.ev-meteors .ev-meteor{position:absolute}
+.ev-meteor{position:fixed;z-index:-1;width:170px;height:4px;border-radius:2px;pointer-events:none;background:linear-gradient(90deg,transparent,#fff 75%,#e6f0ff);box-shadow:0 0 10px #fff,0 0 20px #9cc8ff}`;
     document.head.appendChild(css);
     const m=document.querySelector(C.moon),s=document.querySelector(C.sun),sky=document.querySelector(C.sky);
     if(m&&!m.querySelector(".ev-shade"))m.insertAdjacentHTML("beforeend",'<i class="ev-shade"></i>');
     if(s&&!s.querySelector(".ev-disc"))s.insertAdjacentHTML("beforeend",'<i class="ev-disc"></i>');
     if(sky&&!sky.querySelector(".ev-dim")){const d=document.createElement("div");d.className="ev-dim";sky.appendChild(d)}
     // the northern lights shimmer across the night sky, coming and going in slow waves
-    if(sky&&!sky.querySelector(".ev-aurora")){const a=document.createElement("div");a.className="ev-aurora";
+    if(sky&&C.aurora!=="none"&&!sky.querySelector(".ev-aurora")){const a=document.createElement("div");a.className="ev-aurora";
       a.innerHTML="<b>"+[[2,16,17,0],[14,22,23,-6],[30,14,19,-11],[42,24,27,-3],[60,16,21,-15],[72,22,25,-8],[86,14,18,-2]].map(([l,w,d,dl])=>`<i style="--l:${l}%;--w:${w}%;--d:${d}s;--dl:${dl}s"></i>`).join("")+"</b>";
       sky.prepend(a)}
     apply();setInterval(apply,60000);
@@ -288,8 +290,11 @@ html.ev-solar-total .ev-dim{opacity:.5}html.ev-solar-annular .ev-dim{opacity:.18
     window.SND&&SND.refresh&&SND.refresh();
     clearTimeout(meteorT);if(night&&ev.shower)meteorT=setTimeout(meteor,2000+Math.random()*5000)}
   function meteor(){if(document.visibilityState==="visible"&&!R){const s=document.createElement("div");s.className="ev-meteor";
-      const x=Math.random()*innerWidth*.8,y=10+Math.random()*innerHeight*.3,a=18+Math.random()*22;s.style.left=x+"px";s.style.top=y+"px";document.body.appendChild(s);
-      const dx=200+Math.random()*140;s.animate([{transform:`translate(0,0) rotate(${a}deg)`,opacity:0},{opacity:1,offset:.15},{transform:`translate(${dx}px,${dx*Math.tan(a*Math.PI/180)}px) rotate(${a}deg)`,opacity:0}],{duration:2800,easing:"cubic-bezier(.3,0,.7,1)"}).onfinish=()=>s.remove()}
+      // a long run across the sky behind the page's cards, quick but catchable once it comes out from behind them
+      const x=-60+Math.random()*innerWidth*.35,y=4+Math.random()*innerHeight*.28,a=14+Math.random()*16;s.style.left=x+"px";s.style.top=y+"px";const sky=C.sky&&document.querySelector(C.sky),bh=sky&&C.behind&&sky.querySelector(C.behind);
+      let box=sky&&sky.querySelector(".ev-meteors");if(sky&&!box){box=document.createElement("div");box.className="ev-meteors";bh?bh.before(box):sky.appendChild(box)}
+      if(box){const hz=C.horizon&&document.querySelector(C.horizon),hr=hz&&hz.getBoundingClientRect();box.style.height=(hr&&hr.height?hr.top+hr.height*.45:innerHeight*.7)+"px";box.appendChild(s)}else document.body.appendChild(s);
+      const dx=Math.max(520,innerWidth*.75)+Math.random()*200,ms=innerWidth<700?5:3;/* phones keep the slower speed: less open sky to catch them in */s.animate([{transform:`translate(0,0) rotate(${a}deg)`,opacity:0},{opacity:1,offset:.06},{opacity:1,offset:.9},{transform:`translate(${dx}px,${dx*Math.tan(a*Math.PI/180)}px) rotate(${a}deg)`,opacity:0}],{duration:dx*ms,easing:"linear"}).onfinish=()=>s.remove()}
     const ev=today();if((!window.SKY||SKY.isNight())&&ev.shower)meteorT=setTimeout(meteor,3000+Math.random()*7000)}
   return {today,init,apply,meteor};
 })();
@@ -307,7 +312,7 @@ YS.checkFirst=async function(onWin){
 };
 /* Drop-In: sky events, the first-of-the-day award, and food that turns up on the island now and then (a pizza, a banana, a burger,
    a rubber duck washed ashore). They're plain everyday objects, not any game's characters, and each one reacts to taps in its own way. */
-{EV.init({moon:".fn-moon",sun:".fn-sun",sky:".fn-sky",disc:70,skip:"button,a,input,select,textarea,label,.tabs,.egg-toast,#app",
+{EV.init({moon:".fn-moon",sun:".fn-sun",sky:".fn-sky",behind:".fn-clouds",horizon:".fn-isle",disc:70,skip:"button,a,input,select,textarea,label,.tabs,.egg-toast,#app",
   say:(t,m)=>toast(t,m,"#c9a7ff"),secret:id=>secret(id)});
  const prettyDay=d=>new Date(d+"T12:00:00").toLocaleDateString(undefined,{month:"long",day:"numeric"});
  setTimeout(()=>YS.checkFirst(d=>{toast("First Drop",`You finished the ${prettyDay(d)} Daily Drop sooner after your midnight than anyone else did after theirs.`,"#f2c200");secret("first")}),4000);
@@ -319,8 +324,12 @@ YS.checkFirst=async function(onWin){
 .fn-isle .food .bob{animation:fnDuckBob 2.2s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
 @keyframes fnDuckBob{50%{transform:translateY(-1.5px) rotate(-4deg)}}`;document.head.appendChild(css);
  const isvg=document.querySelector(".fn-isle svg"),NS="http://www.w3.org/2000/svg";
- // [kind, x, ground y, weight]  (higher weight = more common; the duck is the rarest)
- const FOODS=[["pizza",905,83,40],["burger",1100,67,30],["banana",760,91,20],["duck",1492,113,10]];
+ // [kind, weight]  (higher weight = more common; the duck is the rarest)
+ const FOODS=[["pizza",40],["burger",30],["banana",20],["duck",10]];
+ // food turns up toward the sides of the island, away from the text in the middle of the page (the duck sits at the shore)
+ const SPOTS={wide:[250,330,410,1420,1470],phone:[700,735,1465,1500],duck:{wide:1528,phone:1540}};
+ let ground=null;const groundY=x=>{if(!ground){ground=[];const p=isvg.querySelector(".far"),L=p.getTotalLength();for(let d=0;d<L;d+=2){const q=p.getPointAtLength(d);if(q.y<119.5)ground.push(q)}}
+   let best=120;for(const q of ground)if(Math.abs(q.x-x)<3)best=Math.min(best,q.y);return best};
  const pizzaG=()=>{let s='<g transform="scale(1 .55)">';for(let k=0;k<8;k++){const a0=k*Math.PI/4,a1=a0+Math.PI/4,p=(r,a)=>`${(r*Math.cos(a)).toFixed(1)} ${(r*Math.sin(a)).toFixed(1)}`,m=a0+Math.PI/8;
    s+=`<g class="sl"><path d="M0 0L${p(15,a0)}A15 15 0 0 1 ${p(15,a1)}Z" fill="#e3a043"/><path d="M0 0L${p(12.5,a0)}A12.5 12.5 0 0 1 ${p(12.5,a1)}Z" fill="#ffd45c"/><circle cx="${(8*Math.cos(m)).toFixed(1)}" cy="${(8*Math.sin(m)).toFixed(1)}" r="1.8" fill="#d0402f"/></g>`}return s+"</g>"};
  const ART={pizza:()=>`<g transform="translate(0 -5)">${pizzaG()}</g>`,
@@ -330,12 +339,12 @@ YS.checkFirst=async function(onWin){
    burger:()=>`<g class="stack"><rect x="-11" y="-5" width="22" height="5" rx="2" fill="#e0a052"/></g>`,
    duck:()=>`<g class="bob"><ellipse cx="0" cy="-5" rx="9" ry="5.5" fill="#ffd93b"/><circle cx="4" cy="-12" r="4.5" fill="#ffd93b"/><path d="M8 -12.5q4 .5 4.5 2-2 1.4-5 1z" fill="#ff8a1e"/><circle cx="5" cy="-13.5" r=".9" fill="#1a1a2e"/></g>`};
  let food=null,foodT=0;
- function showFood(kind){if(!isvg||food||document.querySelector(".fn-isle .llama.on"))return;const f=FOODS.find(x=>x[0]===kind)||FOODS[0];
-   const g=document.createElementNS(NS,"g");g.setAttribute("class","food "+f[0]);g.setAttribute("transform",`translate(${f[1]} ${f[2]}) scale(1.4)`);
+ function showFood(kind){if(!isvg||food||document.querySelector(".fn-isle .llama.on"))return;const f=FOODS.find(x=>x[0]===kind)||FOODS[0],ph=innerWidth<600?"phone":"wide",xs=SPOTS[ph],x=f[0]==="duck"?SPOTS.duck[ph]:xs[Math.random()*xs.length|0];
+   const g=document.createElementNS(NS,"g");g.setAttribute("class","food "+f[0]);g.setAttribute("transform",`translate(${x} ${groundY(x)+(f[0]==="duck"?1:.5)}) scale(1.4)`);
    g.innerHTML=`<rect x="-26" y="-60" width="52" height="66" fill="transparent"/>`+ART[f[0]]();isvg.appendChild(g);food={g,kind:f[0],n:0};
    requestAnimationFrame(()=>g.classList.add("on"));clearTimeout(foodT);foodT=setTimeout(()=>hideFood(),180000)}
  function hideFood(after=0){const f=food;if(!f)return;food=null;clearTimeout(foodT);setTimeout(()=>{f.g.classList.remove("on");setTimeout(()=>f.g.remove(),1100)},after)}
- const pick=()=>{const tot=FOODS.reduce((a,f)=>a+f[3],0);let r=Math.random()*tot;for(const f of FOODS){if((r-=f[3])<0)return f[0]}return "pizza"};
+ const pick=()=>{const tot=FOODS.reduce((a,f)=>a+f[1],0);let r=Math.random()*tot;for(const f of FOODS){if((r-=f[1])<0)return f[0]}return "pizza"};
  (function loop(first){setTimeout(()=>{if(!food&&document.visibilityState==="visible"&&Math.random()<.45)showFood(pick());loop()},first?15000+Math.random()*25000:60000+Math.random()*60000)})(true);
  window.__food=k=>{if(food){food.g.remove();food=null}showFood(k||pick())};
  function tapFood(){const f=food;if(!f||f.done)return;const g=f.g;f.n++;const n=f.n;
