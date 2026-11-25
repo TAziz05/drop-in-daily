@@ -51,10 +51,10 @@ const EGGS=[
  ["bus","Bus Spotter","Spotted the Battle Bus flying over","Every so often, something big crosses the sky. Tap it."],
  ["llama","Loot Llama","Found the loot llama on the island","Something colorful sometimes grazes on the island."],
  ["bird","Early Bird","Finished the Daily Drop at dawn","Some drops happen just as the sun comes up."],
- ["pizza","Pizza Party","Ate a whole pizza, slice by slice","Sometimes food drifts across the sky. Hungry?"],
- ["banana","Peel Out","Dropped a banana peel on the island","Something yellow floats by now and then. Peel it."],
- ["burger","Tall Order","Stacked a burger until it toppled","A bun drifts by sometimes. Build on it."],
- ["duck","Squeaky Clean","Squeaked a rubber duck five times","Something on a balloon floats by. Give it a squeeze."],
+ ["pizza","Pizza Party","Ate a whole pizza on the island, slice by slice","Someone keeps leaving food on the island. Hungry?"],
+ ["banana","Peel Out","Peeled a banana on the island","Something yellow turns up on the island now and then. Peel it."],
+ ["burger","Tall Order","Stacked a burger until it toppled","A lonely bun sits on the island sometimes. Build on it."],
+ ["duck","Squeaky Clean","Squeaked a rubber duck five times","Very rarely, something squeaky washes up on the island's shore."],
  ["meteor","Stargazer","Caught three falling stars in a meteor shower","A few nights a year, the sky rains stars."],
  ["eclipse","Eclipse Chaser","Tapped the sun or moon during an eclipse","On a real eclipse day, tap whatever goes dark."],
  ["first","First Drop","Finished a Daily Drop sooner after midnight than anyone else","Be the quickest after your own midnight. It's decided the next day."]];
@@ -253,7 +253,7 @@ html.ev-solar-total .ev-dim{opacity:.5}html.ev-solar-annular .ev-dim{opacity:.18
 @keyframes evCurtain{0%{transform:skewX(-14deg) scaleY(.82) translateX(-4%);opacity:.55}50%{opacity:1}100%{transform:skewX(16deg) scaleY(1.05) translateX(6%);opacity:.7}}
 @keyframes evAwave{0%,100%{opacity:.25}20%{opacity:.9}45%{opacity:.5}70%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.ev-aurora>b,.ev-aurora i{animation:none}}
-.ev-meteor{position:fixed;z-index:2;width:150px;height:3px;border-radius:2px;pointer-events:none;background:linear-gradient(90deg,transparent,#fff 75%,#e6f0ff);box-shadow:0 0 10px #fff,0 0 20px #9cc8ff}`;
+.ev-meteor{position:fixed;z-index:2;width:170px;height:4px;border-radius:2px;pointer-events:none;background:linear-gradient(90deg,transparent,#fff 75%,#e6f0ff);box-shadow:0 0 10px #fff,0 0 20px #9cc8ff}`;
     document.head.appendChild(css);
     const m=document.querySelector(C.moon),s=document.querySelector(C.sun),sky=document.querySelector(C.sky);
     if(m&&!m.querySelector(".ev-shade"))m.insertAdjacentHTML("beforeend",'<i class="ev-shade"></i>');
@@ -269,7 +269,7 @@ html.ev-solar-total .ev-dim{opacity:.5}html.ev-solar-annular .ev-dim{opacity:.18
       if(e.target.closest("button,a,input,select,textarea,label"))return;
       const hit=(el,p)=>{if(!el)return false;const r=el.getBoundingClientRect();return e.clientX>=r.left-p&&e.clientX<=r.right+p&&e.clientY>=r.top-p&&e.clientY<=r.bottom+p};
       const ev=today(),night=window.SKY&&SKY.isNight();
-      for(const st of document.querySelectorAll(".ev-meteor"))if(!st.dataset.got&&hit(st,22)){st.dataset.got=1;e.stopImmediatePropagation();
+      for(const st of document.querySelectorAll(".ev-meteor"))if(!st.dataset.got&&hit(st,44)){st.dataset.got=1;e.stopImmediatePropagation();
         window.SND&&SND.play("meteor");caught++;st.style.boxShadow="0 0 18px #fff,0 0 40px #ffe27a";
         if(caught===3){C.say("Stargazer",`You caught three falling stars during the ${ev.shower||"meteor shower"}.`);C.secret("meteor")}return}
       if(e.target.closest(C.skip))return;
@@ -285,10 +285,11 @@ html.ev-solar-total .ev-dim{opacity:.5}html.ev-solar-annular .ev-dim{opacity:.18
     ["total","partial","penumbral"].forEach(k=>set("ev-lunar-"+k,night&&ev.lunar===k));
     ["total","annular","partial"].forEach(k=>set("ev-solar-"+k,!night&&ev.solar===k));
     set("ev-super",ev.supermoon);set("ev-blue",ev.blue&&!ev.lunar);set("ev-shower",night&&ev.shower);
+    window.SND&&SND.refresh&&SND.refresh();
     clearTimeout(meteorT);if(night&&ev.shower)meteorT=setTimeout(meteor,2000+Math.random()*5000)}
   function meteor(){if(document.visibilityState==="visible"&&!R){const s=document.createElement("div");s.className="ev-meteor";
       const x=Math.random()*innerWidth*.8,y=10+Math.random()*innerHeight*.3,a=18+Math.random()*22;s.style.left=x+"px";s.style.top=y+"px";document.body.appendChild(s);
-      const dx=260+Math.random()*200;s.animate([{transform:`translate(0,0) rotate(${a}deg)`,opacity:0},{opacity:1,offset:.15},{transform:`translate(${dx}px,${dx*Math.tan(a*Math.PI/180)}px) rotate(${a}deg)`,opacity:0}],{duration:1500,easing:"ease-in"}).onfinish=()=>s.remove()}
+      const dx=200+Math.random()*140;s.animate([{transform:`translate(0,0) rotate(${a}deg)`,opacity:0},{opacity:1,offset:.15},{transform:`translate(${dx}px,${dx*Math.tan(a*Math.PI/180)}px) rotate(${a}deg)`,opacity:0}],{duration:2800,easing:"cubic-bezier(.3,0,.7,1)"}).onfinish=()=>s.remove()}
     const ev=today();if((!window.SKY||SKY.isNight())&&ev.shower)meteorT=setTimeout(meteor,3000+Math.random()*7000)}
   return {today,init,apply,meteor};
 })();
@@ -304,87 +305,57 @@ YS.checkFirst=async function(onWin){
       const r=await fetch(`${API}/stats/first?day=${d}&dev=${dev}`);if(!r.ok)continue;const j=await r.json();if(j.pending)continue;
       done.push(d);store.set(key,done.slice(-10));if(j.first)onWin(d)}catch(e){}}
 };
-/* Drop-In: sky events, the first-of-the-day award, and things that drift across the sky (a pizza, a banana, a burger, a rubber duck).
-   They're plain everyday objects, not any game's characters, and each one reacts to taps in its own way. */
+/* Drop-In: sky events, the first-of-the-day award, and food that turns up on the island now and then (a pizza, a banana, a burger,
+   a rubber duck washed ashore). They're plain everyday objects, not any game's characters, and each one reacts to taps in its own way. */
 {EV.init({moon:".fn-moon",sun:".fn-sun",sky:".fn-sky",disc:70,skip:"button,a,input,select,textarea,label,.tabs,.egg-toast,#app",
   say:(t,m)=>toast(t,m,"#c9a7ff"),secret:id=>secret(id)});
  const prettyDay=d=>new Date(d+"T12:00:00").toLocaleDateString(undefined,{month:"long",day:"numeric"});
  setTimeout(()=>YS.checkFirst(d=>{toast("First Drop",`You finished the ${prettyDay(d)} Daily Drop sooner after your midnight than anyone else did after theirs.`,"#f2c200");secret("first")}),4000);
  window.__checkFirst=()=>YS.checkFirst(d=>{toast("First Drop",`You finished the ${prettyDay(d)} Daily Drop sooner after your midnight than anyone else did after theirs.`,"#f2c200");secret("first")});
 
+ /* food that sometimes turns up on the island, each with its own rarity (only one at a time, like the llama) */
  const css=document.createElement("style");css.textContent=`
-.fn-float{position:fixed;z-index:3;left:-170px;border:0;padding:0;background:none;cursor:pointer;filter:drop-shadow(0 6px 10px rgba(0,0,40,.25));touch-action:manipulation}
-.fn-float svg{display:block;width:100%;height:100%;overflow:visible}
-.fn-float .bob{animation:fnBob 2.4s ease-in-out infinite}
-@keyframes fnBob{50%{transform:translateY(-8px) rotate(3deg)}}
-.fn-float.pizza{width:110px;height:110px}.fn-float.banana{width:130px;height:90px}.fn-float.duck{width:96px;height:150px}
-.fn-float.burger{width:110px;height:200px}
-.fn-burger{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column-reverse;align-items:center}
-.fn-burger i{display:block;width:96px;flex:none}
-.fn-burger .bun{height:22px;background:#e0a052;border-radius:4px 4px 18px 18px;box-shadow:inset 0 -4px 0 #c4823a}
-.fn-burger .patty{height:16px;width:100px;background:#6b3a1e;border-radius:8px;box-shadow:inset 0 -3px 0 #4e2913}
-.fn-burger .cheese{height:7px;width:104px;background:#ffcf3a;clip-path:polygon(0 0,100% 0,100% 60%,82% 60%,76% 100%,70% 60%,30% 60%,24% 100%,18% 60%,0 60%)}
-.fn-burger .lettuce{height:9px;width:106px;background:#5cc244;border-radius:6px;clip-path:polygon(0 30%,8% 0,16% 30%,24% 0,32% 30%,40% 0,48% 30%,56% 0,64% 30%,72% 0,80% 30%,88% 0,96% 30%,100% 10%,100% 100%,0 100%)}
-.fn-burger .tomato{height:9px;width:92px;background:#e8473a;border-radius:5px}
-.fn-burger .top{height:30px;background:radial-gradient(circle at 30% 40%,#fff3c4 0 2px,transparent 3px),radial-gradient(circle at 55% 30%,#fff3c4 0 2px,transparent 3px),radial-gradient(circle at 72% 50%,#fff3c4 0 2px,transparent 3px),#e0a052;border-radius:48px 48px 6px 6px;box-shadow:inset 0 -4px 0 #c4823a}
-.fn-peel{position:fixed;z-index:2;width:46px;height:30px;pointer-events:none}`;document.head.appendChild(css);
-
- const pizzaSVG=()=>{let s='<svg viewBox="-50 -50 100 100" aria-hidden="true"><g class="bob">';
-   for(let k=0;k<8;k++){const a0=k*Math.PI/4,a1=a0+Math.PI/4,p=(r,a)=>`${(r*Math.cos(a)).toFixed(1)} ${(r*Math.sin(a)).toFixed(1)}`,mid=a0+Math.PI/8;
-     s+=`<g class="sl"><path d="M0 0L${p(46,a0)}A46 46 0 0 1 ${p(46,a1)}Z" fill="#e3a043"/><path d="M0 0L${p(39,a0)}A39 39 0 0 1 ${p(39,a1)}Z" fill="#ffd45c"/>
-       <circle cx="${(24*Math.cos(mid)).toFixed(1)}" cy="${(24*Math.sin(mid)).toFixed(1)}" r="5" fill="#d0402f"/><path d="M0 0L${p(46,a0)}" stroke="#c9832e" stroke-width="1"/></g>`}
-   return s+'</g></svg>'};
- const bananaSVG=`<svg viewBox="0 0 130 90" aria-hidden="true"><g class="bob">
-   <path class="fruit" d="M14 46Q62 96 116 28Q66 68 14 46Z" fill="#fff4c2"/>
-   <path class="skin" d="M10 44Q62 100 120 26Q118 22 114 24Q66 66 14 40Z" fill="#ffd93b" stroke="#c99a12" stroke-width="2"/>
-   <path d="M116 26l6-6 3 3-5 5z" fill="#6b4a1e"/><path d="M10 44l-6 2 2 4 6-2z" fill="#6b4a1e"/>
-   <path class="f1" d="M114 26Q126 40 122 58Q114 44 108 32Z" fill="#ffd93b" stroke="#c99a12" stroke-width="2" opacity="0"/>
-   <path class="f2" d="M112 24Q132 22 140 36Q124 32 110 30Z" fill="#ffd93b" stroke="#c99a12" stroke-width="2" opacity="0"/>
-   <path class="f3" d="M110 24Q112 6 124 0Q118 14 114 28Z" fill="#ffd93b" stroke="#c99a12" stroke-width="2" opacity="0"/></g></svg>`;
- const duckSVG=`<svg viewBox="0 0 96 150" aria-hidden="true"><g class="bob"><g class="balloon"><ellipse cx="48" cy="30" rx="24" ry="28" fill="#ff5a6e"/><ellipse cx="40" cy="20" rx="6" ry="9" fill="#fff" opacity=".35"/>
-   <path d="M44 57h8l-4 6z" fill="#e0465a"/><path d="M48 63Q42 80 50 96" stroke="#fff" stroke-width="1.5" fill="none"/></g>
-   <g class="duck"><ellipse cx="46" cy="128" rx="28" ry="17" fill="#ffd93b"/><circle cx="58" cy="106" r="14" fill="#ffd93b"/><path d="M70 104q12 2 14 6-6 4-15 3z" fill="#ff8a1e"/>
-   <circle cx="61" cy="102" r="2.6" fill="#1a1a2e"/><path d="M26 124q10-8 22 2-12 6-22-2z" fill="#f2c200"/></g></g></svg>`;
-
- let on=null;
- function launch(kind){if(on||document.querySelector(".fn-bus")||document.visibilityState!=="visible")return;
-   const b=document.createElement("button");b.className="fn-float "+kind;on=b;
-   b.setAttribute("aria-label",{pizza:"A pizza drifting by",banana:"A banana drifting by",burger:"A burger drifting by",duck:"A rubber duck on a balloon"}[kind]);
-   b.style.top=(kind==="burger"?14:10)+Math.random()*22+"vh";
-   b.innerHTML=kind==="pizza"?pizzaSVG():kind==="banana"?bananaSVG:kind==="duck"?duckSVG:'<div class="fn-burger bob"><i class="bun"></i></div>';
-   document.body.appendChild(b);
-   const fly=b.animate([{transform:"translate(0,0)"},{transform:`translate(${innerWidth+360}px,-20px)`}],{duration:R?10:26000,easing:"linear"});
-   fly.onfinish=()=>{b.remove();on=null};
-   let n=0;const done=()=>b.dataset.done=1,isDone=()=>b.dataset.done;
-   b.onclick=()=>{if(isDone())return;n++;
-     if(kind==="pizza"){const sl=b.querySelectorAll(".sl:not(.gone)");const s=sl[Math.random()*sl.length|0];if(!s)return;s.classList.add("gone");window.SND&&SND.play("chomp");
-       s.animate([{opacity:1,transform:"scale(1)"},{opacity:0,transform:"scale(.6)"}],{duration:220,fill:"forwards"});
-       if(sl.length===1){done();toast("Pizza Party","Every last slice, gone. Not even the crust survived.","#ff8a3d");secret("pizza")}}
-     else if(kind==="banana"){window.SND&&SND.play("peel",n);
-       if(n<=3){b.querySelector(".f"+n).setAttribute("opacity","1");b.querySelector(".skin").setAttribute("opacity",String(1-n*.28))}
-       if(n===3){done();setTimeout(()=>{window.SND&&SND.play("chomp");b.querySelector(".fruit").setAttribute("opacity","0");b.querySelector(".skin").setAttribute("opacity","0");dropPeel(b)},350)}}
-     else if(kind==="duck"){window.SND&&SND.play("squeak",n);b.querySelector(".duck").animate([{transform:"scale(1)"},{transform:"scale(1.12,.88)"},{transform:"scale(1)"}],{duration:200});
-       if(n===5){done();const d=b.querySelector(".duck");d.style.transformOrigin="48px 120px";d.style.transformBox="view-box";
-         d.animate([{transform:"rotate(0)"},{transform:"rotate(360deg)"}],{duration:600});fly.playbackRate=4;
-         toast("Squeaky Clean","Five squeaks, one happy rubber duck.","#ffd93b");secret("duck")}}
-     else if(kind==="burger"){const st=b.querySelector(".fn-burger"),L=["patty","cheese","lettuce","tomato"];
-       if(n<10){st.insertAdjacentHTML("beforeend",`<i class="${n===9?"top":L[(n-1)%4]}"></i>`);window.SND&&SND.play("layer",n);
-         st.lastElementChild.animate([{transform:"translateY(-40px)",opacity:0},{transform:"translateY(0)",opacity:1}],{duration:180,easing:"ease-in"});
-         if(n===9)st.animate([{transform:"rotate(0)"},{transform:"rotate(-5deg)"},{transform:"rotate(5deg)"},{transform:"rotate(0)"}],{duration:500,iterations:2})}
-       else{done();window.SND&&SND.play("topple");st.style.animation="none";
-         [...st.children].forEach((l,k)=>l.animate([{transform:"translate(0,0) rotate(0)"},{transform:`translate(${(k%2?1:-1)*(30+k*14)}px,${innerHeight*.6}px) rotate(${(k%2?1:-1)*(90+k*30)}deg)`,opacity:0}],{duration:900+k*60,easing:"cubic-bezier(.5,0,.9,.6)",fill:"forwards"}));
-         toast("Tall Order","Ten layers was one too many. The burger toppled over.","#e0a052");secret("burger")}}};
-   return b}
- // the empty peel falls and lands on the island
- function dropPeel(b){const r=b.getBoundingClientRect(),isle=document.querySelector(".fn-isle");const ir=isle?isle.getBoundingClientRect():{top:innerHeight*.75,left:0,width:innerWidth};
-   const p=document.createElement("div");p.className="fn-peel";p.innerHTML='<svg viewBox="0 0 46 30"><path d="M4 22Q22 30 42 18Q30 16 22 6Q20 18 4 22Z" fill="#ffd93b" stroke="#c99a12" stroke-width="2"/><path d="M22 6l2-5" stroke="#6b4a1e" stroke-width="3"/></svg>';
-   p.style.left=r.left+r.width/2-23+"px";p.style.top=r.top+r.height/2+"px";document.body.appendChild(p);
-   const tx=ir.left+ir.width*(.35+Math.random()*.3)-(r.left+r.width/2),ty=ir.top+ir.height*.45-(r.top+r.height/2);
-   p.animate([{transform:"translate(0,0) rotate(0)"},{transform:`translate(${tx}px,${ty}px) rotate(540deg)`}],{duration:R?10:1400,easing:"cubic-bezier(.4,0,.9,.7)",fill:"forwards"}).onfinish=()=>{
-     window.SND&&SND.play("slip");toast("Peel Out","The banana peel landed on the island. Watch your step down there.","#ffd93b");secret("banana");
-     setTimeout(()=>{p.animate([{opacity:1},{opacity:0}],{duration:1500,fill:"forwards"}).onfinish=()=>p.remove()},60000)}}
- (function loop(){setTimeout(()=>{if(Math.random()<.35&&!playing())launch(["pizza","banana","burger","duck"][Math.random()*4|0]);loop()},60000+Math.random()*60000)})();
- window.__floater=k=>launch(k||["pizza","banana","burger","duck"][Math.random()*4|0]);
+.fn-isle .food{opacity:0;transition:opacity 1s}.fn-isle .food.on{opacity:1}
+.fn-isle .food .bob{animation:fnDuckBob 2.2s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes fnDuckBob{50%{transform:translateY(-1.5px) rotate(-4deg)}}`;document.head.appendChild(css);
+ const isvg=document.querySelector(".fn-isle svg"),NS="http://www.w3.org/2000/svg";
+ // [kind, x, ground y, weight]  (higher weight = more common; the duck is the rarest)
+ const FOODS=[["pizza",905,83,40],["burger",1100,67,30],["banana",760,91,20],["duck",1492,113,10]];
+ const pizzaG=()=>{let s='<g transform="scale(1 .55)">';for(let k=0;k<8;k++){const a0=k*Math.PI/4,a1=a0+Math.PI/4,p=(r,a)=>`${(r*Math.cos(a)).toFixed(1)} ${(r*Math.sin(a)).toFixed(1)}`,m=a0+Math.PI/8;
+   s+=`<g class="sl"><path d="M0 0L${p(15,a0)}A15 15 0 0 1 ${p(15,a1)}Z" fill="#e3a043"/><path d="M0 0L${p(12.5,a0)}A12.5 12.5 0 0 1 ${p(12.5,a1)}Z" fill="#ffd45c"/><circle cx="${(8*Math.cos(m)).toFixed(1)}" cy="${(8*Math.sin(m)).toFixed(1)}" r="1.8" fill="#d0402f"/></g>`}return s+"</g>"};
+ const ART={pizza:()=>`<g transform="translate(0 -5)">${pizzaG()}</g>`,
+   banana:()=>`<g transform="translate(-14 -14) scale(.24)"><path class="fruit" d="M14 46Q62 96 116 28Q66 68 14 46Z" fill="#fff4c2"/><path class="skin" d="M10 44Q62 100 120 26Q118 22 114 24Q66 66 14 40Z" fill="#ffd93b" stroke="#c99a12" stroke-width="3"/>
+     <path d="M116 26l6-6 3 3-5 5z" fill="#6b4a1e"/><path class="f1" d="M114 26Q126 40 122 58Q114 44 108 32Z" fill="#ffd93b" stroke="#c99a12" stroke-width="3" opacity="0"/>
+     <path class="f2" d="M112 24Q132 22 140 36Q124 32 110 30Z" fill="#ffd93b" stroke="#c99a12" stroke-width="3" opacity="0"/><path class="f3" d="M110 24Q112 6 124 0Q118 14 114 28Z" fill="#ffd93b" stroke="#c99a12" stroke-width="3" opacity="0"/></g>`,
+   burger:()=>`<g class="stack"><rect x="-11" y="-5" width="22" height="5" rx="2" fill="#e0a052"/></g>`,
+   duck:()=>`<g class="bob"><ellipse cx="0" cy="-5" rx="9" ry="5.5" fill="#ffd93b"/><circle cx="4" cy="-12" r="4.5" fill="#ffd93b"/><path d="M8 -12.5q4 .5 4.5 2-2 1.4-5 1z" fill="#ff8a1e"/><circle cx="5" cy="-13.5" r=".9" fill="#1a1a2e"/></g>`};
+ let food=null,foodT=0;
+ function showFood(kind){if(!isvg||food||document.querySelector(".fn-isle .llama.on"))return;const f=FOODS.find(x=>x[0]===kind)||FOODS[0];
+   const g=document.createElementNS(NS,"g");g.setAttribute("class","food "+f[0]);g.setAttribute("transform",`translate(${f[1]} ${f[2]}) scale(1.4)`);
+   g.innerHTML=`<rect x="-26" y="-60" width="52" height="66" fill="transparent"/>`+ART[f[0]]();isvg.appendChild(g);food={g,kind:f[0],n:0};
+   requestAnimationFrame(()=>g.classList.add("on"));clearTimeout(foodT);foodT=setTimeout(()=>hideFood(),180000)}
+ function hideFood(after=0){const f=food;if(!f)return;food=null;clearTimeout(foodT);setTimeout(()=>{f.g.classList.remove("on");setTimeout(()=>f.g.remove(),1100)},after)}
+ const pick=()=>{const tot=FOODS.reduce((a,f)=>a+f[3],0);let r=Math.random()*tot;for(const f of FOODS){if((r-=f[3])<0)return f[0]}return "pizza"};
+ (function loop(first){setTimeout(()=>{if(!food&&document.visibilityState==="visible"&&Math.random()<.45)showFood(pick());loop()},first?15000+Math.random()*25000:60000+Math.random()*60000)})(true);
+ window.__food=k=>{if(food){food.g.remove();food=null}showFood(k||pick())};
+ function tapFood(){const f=food;if(!f||f.done)return;const g=f.g;f.n++;const n=f.n;
+   if(f.kind==="pizza"){const sl=g.querySelectorAll(".sl:not(.gone)");const s=sl[Math.random()*sl.length|0];if(!s)return;s.classList.add("gone");s.style.transition="opacity .2s";s.style.opacity="0";window.SND&&SND.play("chomp");
+     if(sl.length===1){f.done=1;toast("Pizza Party","Someone left a pizza on the island. Every last slice is gone now.","#ff8a3d");secret("pizza");hideFood(1500)}}
+   else if(f.kind==="banana"){window.SND&&SND.play("peel",n);if(n<=3){g.querySelector(".f"+n).setAttribute("opacity","1");g.querySelector(".skin").setAttribute("opacity",String(1-n*.28))}
+     if(n===3){f.done=1;setTimeout(()=>{window.SND&&SND.play("chomp");g.querySelector(".fruit").setAttribute("opacity","0");g.querySelector(".skin").setAttribute("opacity","0");
+       window.SND&&SND.play("slip");toast("Peel Out","You ate the banana on the island and left the peel. Watch your step down there.","#ffd93b");secret("banana");hideFood(20000)},350)}}
+   else if(f.kind==="duck"){window.SND&&SND.play("squeak",n);
+     if(n===5){f.done=1;const d=g.querySelector(".bob");d.style.animation="none";d.animate([{transform:"rotate(0)"},{transform:"rotate(360deg)"}],{duration:600});
+       toast("Squeaky Clean","Five squeaks for the rubber duck washed up on the island.","#ffd93b");secret("duck");hideFood(4000)}}
+   else if(f.kind==="burger"){const st=g.querySelector(".stack"),L=[["#6b3a1e",3.5],["#ffcf3a",1.6],["#5cc244",2],["#e8473a",2]];
+     if(n<10){const top=n===9,[c,h]=top?["#e0a052",6]:L[(n-1)%4],y=-5-[...st.children].slice(1).reduce((a,r)=>a+(+r.getAttribute("height")),0)-h;
+       st.insertAdjacentHTML("beforeend",`<rect x="${top?-11:-12}" y="${y}" width="${top?22:24}" height="${h}" rx="${top?3:1}" fill="${c}"/>`);window.SND&&SND.play("layer",n)}
+     else{f.done=1;window.SND&&SND.play("topple");[...st.children].forEach((r,k)=>{r.style.transformBox="fill-box";r.style.transformOrigin="50% 50%";
+         r.animate([{transform:"translate(0,0) rotate(0)",opacity:1},{transform:`translate(${(k%2?1:-1)*(8+k*3)}px,${10+k}px) rotate(${(k%2?1:-1)*(80+k*25)}deg)`,opacity:0}],{duration:900+k*50,fill:"forwards",easing:"ease-in"})});
+       toast("Tall Order","Ten layers was one too many. The burger on the island toppled over.","#e0a052");secret("burger");hideFood(1500)}}}
+ // the page's content sits above the island, so taps are matched by position
+ document.addEventListener("click",e=>{if(!food||food.done||e.target.closest("button,a,input,select,textarea,label,.tabs,.egg-toast"))return;
+   const r=food.g.getBoundingClientRect(),pad=16;if(e.clientX<r.left-pad||e.clientX>r.right+pad||e.clientY<r.top-pad||e.clientY>r.bottom+pad)return;e.stopImmediatePropagation();tapFood()},true);
 }
 /* Drop-In: the island comes closer once you've dropped in, the Battle Bus flies over, a loot llama grazes on the island,
    and the full moon is worth a tap */
@@ -411,7 +382,7 @@ body.fn-landed .fn-isle{transform:scale(2.1)}
  if(svg){const g=document.createElementNS("http://www.w3.org/2000/svg","g");g.setAttribute("class","llama");g.setAttribute("transform","translate(1340 58) scale(1.7)");
    g.innerHTML=`<rect x="-30" y="-40" width="84" height="70" fill="transparent"/><path d="M0 0h14v-3h3v-10h4v3h2v-4h-2v-3h-4v3h-1v11H0z" fill="#b25fe6"/><rect x="1" y="0" width="3" height="5" fill="#8a3fc2"/><rect x="10" y="0" width="3" height="5" fill="#8a3fc2"/><rect x="3" y="-2" width="4" height="2" fill="#5fd0ff"/><rect x="8" y="-2" width="3" height="2" fill="#ffd34d"/><rect x="18" y="-12" width="1.5" height="1.5" fill="#1a0b2e"/>`;
    svg.appendChild(g);
-   const show=()=>{if(!g.classList.contains("on")&&document.visibilityState==="visible")g.classList.add("on")};
+   const show=()=>{if(!g.classList.contains("on")&&document.visibilityState==="visible"&&!document.querySelector(".fn-isle .food"))g.classList.add("on")};
    if(Math.random()<.5)setTimeout(show,20000+Math.random()*40000);
    // the page's content layer sits above the island, so taps are matched by position (with some room around the llama)
    document.addEventListener("click",e=>{if(!g.classList.contains("on")||e.target.closest("button,a,input,select,textarea,label,.tabs,.egg-toast"))return;

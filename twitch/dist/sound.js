@@ -216,6 +216,32 @@ const SONGS={
    if(half===1){const mel=[[67,0,70,74,0,72,70,0],[70,0,67,63,0,67,70,72],[74,0,77,74,72,70,0,69],[72,0,0,69,0,65,0,0]][bar];
      if(s%2===0){const n=mel[s/2];if(n){const len=(mel[s/2+1]===0?2:1)*.26;brass({t,n,dur:len,vol:.045,bus:M});brass({t,n:n-12,dur:len,vol:.025,bus:M})}}}
    if(bar===3&&half===1&&s===12)noise({t,dur:.6,vol:.06,freq:5000,bus:M});
+ }},
+ mEclipse:{bpm:66,steps:64,play(i,t){ // eclipse: slow and uneasy in D minor, a low drone, a ticking pulse and a falling bell line
+   const bar=Math.floor(i/16),s=i%16;const ch=[[50,53,57],[46,50,53],[43,46,50],[45,49,52]][bar];
+   if(s===0){tone({t,n:ch[0]-24,type:"sawtooth",dur:3.4,vol:.07,att:.6,cut:420,bus:musBus});ch.forEach((n,k)=>tone({t,n:n+12,type:"sawtooth",dur:3.2,vol:.018,att:.9,cut:900,detune:k*4-4,bus:musBus}))}
+   if(s===0||s===3)tone({t,f:70,slide:40,type:"sine",dur:.35,vol:s?.2:.32,bus:musBus});
+   if(s%4===2)tone({t,n:86,type:"sine",dur:.05,vol:.02,bus:musBus});
+   const bell={0:74,6:73,8:72,12:69}[s];if(bell&&(bar%2===0||s>4))tone({t,n:bell-(bar===3?2:0),type:"sine",dur:1.6,vol:.045,att:.004,bus:musBus});
+   if(s===8&&bar%2)noise({t,dur:1.4,vol:.03,type:"bandpass",freq:600,sweep:2400,q:4,bus:musBus});
+ }},
+ mBlood:{bpm:88,steps:64,play(i,t){ // blood moon: a driving, menacing E phrygian ostinato with heavy hits and clashing high stabs
+   const bar=Math.floor(i/16),s=i%16;const root=[40,41,40,43][bar];
+   if(s%2===0)tone({t,n:root+(s%8===6?1:0),type:"sawtooth",dur:.2,vol:.1,cut:650,bus:musBus});
+   if(s%2===0)tone({t,n:root-12,type:"square",dur:.18,vol:.05,cut:300,bus:musBus});
+   if(s===0||s===10)tone({t,f:90,slide:36,type:"sine",dur:.5,vol:.36,bus:musBus});
+   if(s===4||s===12)noise({t,dur:.18,vol:.14,type:"bandpass",freq:700,q:1.2,bus:musBus});
+   if(s===14&&bar===3)[0,1,2].forEach(k=>tone({t:t+k*.07,f:180-k*30,slide:70,type:"triangle",dur:.12,vol:.18,bus:musBus}));
+   if(s===0&&bar%2===1)[76,77].forEach(n=>tone({t,n,type:"square",dur:.6,vol:.025,cut:2500,bus:musBus}));
+   if(s===8)[64,65,71].forEach(n=>tone({t,n,type:"sawtooth",dur:.9,vol:.016,att:.2,cut:1600,bus:musBus}));
+   if(s%4===3)noise({t,dur:.02,vol:.03,freq:9000,bus:musBus});
+ }},
+ mCalm:{bpm:70,steps:64,play(i,t){ // calm moon: soft sine chords, a slow music-box line and a gentle brush, no drums
+   const bar=Math.floor(i/16),s=i%16;const ch=[[48,52,55,59],[45,48,52,55],[41,45,48,52],[43,47,50,55]][bar];
+   if(s===0)ch.forEach((n,k)=>tone({t:t+k*.04,n:n+12,type:"sine",dur:3,vol:.035,att:.3,bus:musBus}));
+   if(s===0||s===8)tone({t,n:ch[0]-12,type:"sine",dur:1.8,vol:.16,att:.05,bus:musBus});
+   const box=[[0,76],[3,79],[6,83],[10,79],[13,76]];box.forEach(([q,n])=>{if(q===s)tone({t,n:n-(bar===2?2:0),type:"sine",dur:1,vol:.04,att:.003,bus:musBus})});
+   if(s===8)noise({t,dur:.5,vol:.02,type:"bandpass",freq:3500,q:.8,bus:musBus});
  }}
 };
 let want="lobby",cur=null,timer=null,step=0,nextT=0,src=null;
@@ -239,7 +265,11 @@ function startSong(k){
   const f=FILES[k],b=BUF[k];
   if(f&&b){src=A.createBufferSource();src.buffer=b;src.loop=true;src.loopStart=f.pad;src.loopEnd=f.pad+f.L;const g=A.createGain();g.gain.value=f.gain;src.connect(g);g.connect(musBus);src.start(A.currentTime+.03,f.pad);return}
   load(k);step=0;nextT=A.currentTime+.12;timer=setInterval(schedule,90)}
-function applyMusic(){const k=st.mu&&A&&A.state==="running"&&!document.hidden&&Date.now()>=holdUntil?(G.songs[want]||null):null;if(k!==cur)startSong(k)}
+// sky events change the menu and summary music: something darker during an eclipse, scarier for a blood moon, calmer for a super or blue moon
+function moodSong(w){if(w!=="lobby"&&w!=="endless")return null;const e=window.EV&&EV.today&&EV.today();if(!e)return null;const n=window.SKY?SKY.isNight():false;
+  if(!n&&e.solar)return "mEclipse";if(n&&e.lunar==="total")return "mBlood";if(n&&e.lunar)return "mEclipse";if(n&&(e.supermoon||e.blue))return "mCalm";return null}
+function applyMusic(){const k=st.mu&&A&&A.state==="running"&&!document.hidden&&Date.now()>=holdUntil?(moodSong(want)||G.songs[want]||null):null;if(k!==cur)startSong(k)}
+SND.refresh=()=>{if(A)applyMusic()};setInterval(()=>{if(A&&st.mu)applyMusic()},30000);
 function wake(){if(!(st.fx||st.mu))return;ctx();if(st.mu)preload();if(A.state!=="running")A.resume().then(applyMusic,noop);else applyMusic()}
 SND.on=()=>st.fx;
 SND.state=()=>({music:cur,want,audio:A?A.state:"none",file:!!src});
