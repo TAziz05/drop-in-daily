@@ -245,12 +245,24 @@ html.ev-solar-annular ${C.sun}>.ev-disc{opacity:1;transform:scale(.82);box-shado
 html.ev-solar-partial ${C.sun}>.ev-disc{opacity:.96;transform:translate(34%,-22%)}
 .ev-dim{position:absolute;inset:0;pointer-events:none;background:#080a28;opacity:0;transition:opacity 3s}
 html.ev-solar-total .ev-dim{opacity:.5}html.ev-solar-annular .ev-dim{opacity:.18}html.ev-solar-partial .ev-dim{opacity:.1}
+.ev-aurora{position:absolute;left:-15%;right:-15%;top:-4vh;height:58vh;pointer-events:none;opacity:calc((var(--night,0) - .55)*2.2);mix-blend-mode:screen}
+.ev-aurora>b{position:absolute;inset:0;filter:blur(16px);animation:evAwave 150s ease-in-out infinite}
+.ev-aurora i{position:absolute;top:0;height:100%;width:var(--w);left:var(--l);border-radius:45% 45% 50% 50%/30% 30% 70% 70%;transform-origin:50% 0;
+  background:linear-gradient(180deg,rgba(150,90,255,0) 0%,rgba(150,90,255,.28) 14%,rgba(70,255,170,.6) 44%,rgba(60,220,255,.28) 72%,transparent 100%);
+  animation:evCurtain var(--d) ease-in-out infinite alternate;animation-delay:var(--dl)}
+@keyframes evCurtain{0%{transform:skewX(-14deg) scaleY(.82) translateX(-4%);opacity:.55}50%{opacity:1}100%{transform:skewX(16deg) scaleY(1.05) translateX(6%);opacity:.7}}
+@keyframes evAwave{0%,100%{opacity:.25}20%{opacity:.9}45%{opacity:.5}70%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.ev-aurora>b,.ev-aurora i{animation:none}}
 .ev-meteor{position:fixed;z-index:2;width:150px;height:3px;border-radius:2px;pointer-events:none;background:linear-gradient(90deg,transparent,#fff 75%,#e6f0ff);box-shadow:0 0 10px #fff,0 0 20px #9cc8ff}`;
     document.head.appendChild(css);
     const m=document.querySelector(C.moon),s=document.querySelector(C.sun),sky=document.querySelector(C.sky);
     if(m&&!m.querySelector(".ev-shade"))m.insertAdjacentHTML("beforeend",'<i class="ev-shade"></i>');
     if(s&&!s.querySelector(".ev-disc"))s.insertAdjacentHTML("beforeend",'<i class="ev-disc"></i>');
     if(sky&&!sky.querySelector(".ev-dim")){const d=document.createElement("div");d.className="ev-dim";sky.appendChild(d)}
+    // the northern lights shimmer across the night sky, coming and going in slow waves
+    if(sky&&!sky.querySelector(".ev-aurora")){const a=document.createElement("div");a.className="ev-aurora";
+      a.innerHTML="<b>"+[[2,16,17,0],[14,22,23,-6],[30,14,19,-11],[42,24,27,-3],[60,16,21,-15],[72,22,25,-8],[86,14,18,-2]].map(([l,w,d,dl])=>`<i style="--l:${l}%;--w:${w}%;--d:${d}s;--dl:${dl}s"></i>`).join("")+"</b>";
+      sky.prepend(a)}
     apply();setInterval(apply,60000);
     // tap the sun or moon during an eclipse; tap a falling star during a meteor shower
     document.addEventListener("click",e=>{
@@ -298,6 +310,7 @@ YS.checkFirst=async function(onWin){
   say:(t,m)=>toast(t,m,"#c9a7ff"),secret:id=>secret(id)});
  const prettyDay=d=>new Date(d+"T12:00:00").toLocaleDateString(undefined,{month:"long",day:"numeric"});
  setTimeout(()=>YS.checkFirst(d=>{toast("First Drop",`You finished the ${prettyDay(d)} Daily Drop sooner after your midnight than anyone else did after theirs.`,"#f2c200");secret("first")}),4000);
+ window.__checkFirst=()=>YS.checkFirst(d=>{toast("First Drop",`You finished the ${prettyDay(d)} Daily Drop sooner after your midnight than anyone else did after theirs.`,"#f2c200");secret("first")});
 
  const css=document.createElement("style");css.textContent=`
 .fn-float{position:fixed;z-index:3;left:-170px;border:0;padding:0;background:none;cursor:pointer;filter:drop-shadow(0 6px 10px rgba(0,0,40,.25));touch-action:manipulation}
