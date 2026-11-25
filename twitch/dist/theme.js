@@ -42,6 +42,7 @@ function dropIn(then,short){
   window.SND&&SND.play("skydive",short);
   const o=document.createElement("div");o.className="fn-jump";o.setAttribute("role","presentation");
   let bits="";for(let i=0;i<16;i++)bits+=`<span class="streak" style="left:${Math.random()*100}%;height:${60+Math.random()*120}px;animation-duration:${.35+Math.random()*.4}s;animation-delay:-${Math.random()}s"></span>`;
+  for(let i=0;i<22;i++)bits+=`<span class="jstar" style="left:${Math.random()*100}%;animation-duration:${2.2+Math.random()*2}s;animation-delay:-${Math.random()*3}s"></span>`;
   for(let i=0;i<7;i++)bits+=`<span class="puff" style="--s:${90+Math.random()*160}px;left:${Math.random()*90-10}%;animation-duration:${.9+Math.random()*.8}s;animation-delay:-${Math.random()*1.5}s"></span>`;
   o.innerHTML=bits+`<div class="fn-jump-in"><div class="fn-jump-t">Dropping in</div><div class="fn-alt"><span id="fn-alt">1,000</span><small>m</small></div><div class="fn-skip">Tap to skip</div></div>`;
   document.body.appendChild(o);

@@ -170,17 +170,20 @@ const REDUCED=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").
 function confetti(ms=2600,count=170){
   if(REDUCED)return;
   const c=document.createElement("canvas");c.className="confetti";document.body.appendChild(c);
-  const x=c.getContext("2d"),dpr=window.devicePixelRatio||1;
+  const x=c.getContext("2d"),dpr=Math.min(1.5,window.devicePixelRatio||1);
+  if(innerWidth<700)count=Math.round(count*.6);
   const size=()=>{c.width=innerWidth*dpr;c.height=innerHeight*dpr;x.setTransform(dpr,0,0,dpr,0,0)};size();addEventListener("resize",size);
   const cols=["#ffd53d","#3d8bff","#b36bff","#ff5fa2","#4fd06b","#ffffff","#ff8a3d"];
   const P=Array.from({length:count},()=>({x:innerWidth*(.2+Math.random()*.6),y:innerHeight*.35+Math.random()*40,
     vx:(Math.random()-.5)*11,vy:-(7+Math.random()*9),w:6+Math.random()*7,h:9+Math.random()*9,r:Math.random()*6,vr:(Math.random()-.5)*.35,
     c:cols[Math.random()*cols.length|0],round:Math.random()<.25}));
   const t0=performance.now();
-  (function frame(t){const el=t-t0;x.clearRect(0,0,innerWidth,innerHeight);
-    for(const p of P){p.vy+=.28;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;
-      x.save();x.globalAlpha=Math.max(0,1-Math.max(0,el-ms+700)/700);x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;
-      if(p.round){x.beginPath();x.arc(0,0,p.w/2,0,7);x.fill()}else x.fillRect(-p.w/2,-p.h/2,p.w,p.h*Math.abs(Math.cos(p.r*2)));x.restore()}
+  (function frame(t){let el=t-t0;x.clearRect(0,0,innerWidth,innerHeight);
+    x.globalAlpha=Math.max(0,1-Math.max(0,el-ms+700)/700);let live=0;
+    for(const p of P){if(p.y>innerHeight+40)continue;live++;p.vy+=.28;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;
+      const co=Math.cos(p.r),si=Math.sin(p.r);x.setTransform(dpr*co,dpr*si,-dpr*si,dpr*co,dpr*p.x,dpr*p.y);x.fillStyle=p.c;
+      if(p.round)x.fillRect(-p.w/3,-p.w/3,p.w/1.5,p.w/1.5);else x.fillRect(-p.w/2,-p.h/2,p.w,p.h*Math.abs(Math.cos(p.r*2)))}
+    x.setTransform(dpr,0,0,dpr,0,0);if(!live)el=ms;
     if(el<ms)requestAnimationFrame(frame);else{removeEventListener("resize",size);c.remove()}})(t0);
 }
 const allPerfectToday=()=>["main","e","m","h","x"].every(k=>{const d=store.get(keyFor(k));return d&&d.marks&&d.marks.length&&d.marks.every(Boolean)});
