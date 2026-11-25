@@ -964,7 +964,14 @@ const EGGS=[
  ["fullmoon","Full Moon","Tapped the full moon","Once a month, the moon is worth a closer look."],
  ["bus","Bus Spotter","Spotted the Battle Bus flying over","Every so often, something big crosses the sky. Tap it."],
  ["llama","Loot Llama","Found the loot llama on the island","Something colorful sometimes grazes on the island."],
- ["bird","Early Bird","Finished the Daily Drop at dawn","Some drops happen just as the sun comes up."]];
+ ["bird","Early Bird","Finished the Daily Drop at dawn","Some drops happen just as the sun comes up."],
+ ["pizza","Pizza Party","Ate a whole pizza, slice by slice","Sometimes food drifts across the sky. Hungry?"],
+ ["banana","Peel Out","Dropped a banana peel on the island","Something yellow floats by now and then. Peel it."],
+ ["burger","Tall Order","Stacked a burger until it toppled","A bun drifts by sometimes. Build on it."],
+ ["duck","Squeaky Clean","Squeaked a rubber duck five times","Something on a balloon floats by. Give it a squeeze."],
+ ["meteor","Stargazer","Caught three falling stars in a meteor shower","A few nights a year, the sky rains stars."],
+ ["eclipse","Eclipse Chaser","Tapped the sun or moon during an eclipse","On a real eclipse day, tap whatever goes dark."],
+ ["first","First Drop","Finished a Daily Drop sooner after midnight than anyone else","Be the quickest after your own midnight. It's decided the next day."]];
 let tEl=null,tTimer,tQueue=[];
 function toast(title,html,c="#ffd53d",ms=7000){if(tEl){tQueue.push([title,html,c,ms]);return}
   const d=document.createElement("div");d.className="egg-toast";d.setAttribute("role","status");d.style.setProperty("--c",c);
@@ -1076,8 +1083,8 @@ const YS=(()=>{
   // a random ID for this device, so its result counts once; nothing else about the player is sent
   const dev=()=>{let v=store.get("dropin:dev");if(typeof v!=="string"||!/^[a-z0-9]{24}$/.test(v)){v=Array.from(crypto.getRandomValues(new Uint8Array(24)),b=>"abcdefghijklmnopqrstuvwxyz0123456789"[b%36]).join("");store.set("dropin:dev",v)}return v};
   async function everyone(post){
-    try{const opt=post?{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({dev:dev(),ids:S.qs.map(q=>q.id),marks:S.marks})}:{};
-      const r=await fetch(API+(post?"/stats/result":"/stats/daily"),opt);return r.ok?await r.json():null}catch(e){return null}}
+    try{const opt=post?{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({dev:dev(),day:dayKey,mins:(d=>d.getHours()*60+d.getMinutes())(new Date()),ids:S.qs.map(q=>q.id),marks:S.marks})}:{};
+      const r=await fetch(API+(post?"/stats/result":"/stats/daily?day="+dayKey),opt);return r.ok?await r.json():null}catch(e){return null}}
   function everyoneHTML(g,score){
     if(!g)return "";
     if(!g.dist)return `<section class="gs"><h3>How everyone did today</h3><p class="ys-note">Everyone's results show up once ${g.min} players have finished today's Daily Drop (${g.n} so far). Check back later!</p></section>`;
@@ -1117,6 +1124,169 @@ const _rys=results;results=function(fresh){_rys.apply(this,arguments);YS.addToRe
 // the real moon phase (0 = new, 0.5 = full); a full moon is within about a day of 0.5
 const moonPhase=()=>{const syn=29.530588853,ref=Date.UTC(2000,0,6,18,14)/864e5;return((((Date.now()/864e5-ref)%syn)+syn)%syn)/syn};
 const fullMoon=()=>window.__fullMoon===true||Math.abs(moonPhase()-.5)<.034;
+/* ===== Sky events on their real dates: eclipses, blood moons, supermoons, blue moons and meteor showers =====
+   Dates and times are UTC. Eclipses: NASA's eclipse tables (a few times rounded). Supermoons: Fred Espenak's table via EarthSky.
+   Everyone sees an event on its day, wherever they are; solar ones in the daytime, lunar ones at night. */
+const EV=(()=>{
+  const SOLAR={"2027-02-06T16:00":"annular","2027-08-02T10:07":"total","2028-01-26T15:08":"annular","2028-07-22T02:56":"total","2029-01-14T17:13":"partial",
+    "2029-06-12T04:06":"partial","2029-07-11T15:37":"partial","2029-12-05T15:03":"partial","2030-06-01T06:29":"annular","2030-11-25T06:51":"total"};
+  const LUNAR={"2027-02-20T23:13":"penumbral","2027-07-18T16:03":"penumbral","2027-08-17T07:14":"penumbral","2028-01-12T04:14":"partial","2028-07-06T18:20":"partial",
+    "2028-12-31T16:53":"total","2029-06-26T03:23":"total","2029-12-20T22:43":"total","2030-06-15T18:34":"partial","2030-12-09T22:28":"penumbral"};
+  const SUPER=["2026-11-24","2026-12-24","2027-01-22","2027-02-20","2028-01-12","2028-02-10","2028-03-11","2029-02-28","2029-03-30","2029-04-28","2029-10-07","2030-06-15"];
+  const BLUE=["2027-05-20","2028-12-31"];
+  const SHOWERS=[["Quadrantids",1,3],["Lyrids",4,22],["Eta Aquariids",5,5],["Perseids",8,12],["Orionids",10,21],["Leonids",11,17],["Geminids",12,14]];
+  const near=(map,now,win)=>{for(const k in map)if(Math.abs(now-Date.parse(k+":00Z"))<win)return map[k];return null};
+  const nearDay=(list,now)=>list.some(d=>Math.abs(now-Date.parse(d+"T12:00:00Z"))<36*36e5);
+  // window.__skyEvent lets the preview page try an event: {solar:"total"}, {lunar:"total"}, {supermoon:true}, {blue:true}, {shower:"Geminids"}
+  function today(){const now=Date.now(),f=window.__skyEvent||{},d=new Date();
+    let shower=f.shower||null;
+    if(!f.shower&&!("shower" in f))for(const [n,m,dd] of SHOWERS){const p=new Date(d.getFullYear(),m-1,dd);if(d>=p-864e5&&d<+p+2*864e5){shower=n;break}}
+    return {solar:"solar" in f?f.solar:near(SOLAR,now,14*36e5),lunar:"lunar" in f?f.lunar:near(LUNAR,now,14*36e5),
+      supermoon:"supermoon" in f?f.supermoon:nearDay(SUPER,now),blue:"blue" in f?f.blue:nearDay(BLUE,now),shower}}
+  let C=null,meteorT=0,caught=0;
+  function init(cfg){C=cfg;
+    const css=document.createElement("style");css.textContent=`
+${C.moon}>.ev-shade{position:absolute;inset:0;border-radius:50%;pointer-events:none;opacity:0;transition:opacity 2s;background:radial-gradient(circle at 26% 36%,rgba(70,12,6,.9) 0 48%,rgba(70,12,6,.4) 52%,transparent 56%)}
+html.ev-lunar-partial ${C.moon}>.ev-shade{opacity:1}
+html.ev-lunar-total ${C.moon}>.ev-shade{opacity:.9;background:radial-gradient(circle at 42% 38%,#e06a3a,#9a2614 55%,#5e1209 72%,transparent 74%)}
+html.ev-lunar-total ${C.moon}{filter:sepia(1) saturate(5) hue-rotate(-28deg) brightness(.72) drop-shadow(0 0 18px rgba(255,80,40,.6)) drop-shadow(0 0 40px rgba(255,60,30,.3))!important}
+html.ev-lunar-penumbral ${C.moon}{filter:brightness(.72) sepia(.4) drop-shadow(0 0 10px rgba(255,200,170,.25))!important}
+html.ev-super ${C.moon}{scale:1.3}
+html.ev-blue ${C.moon}{filter:saturate(.5) hue-rotate(185deg) brightness(1.08) drop-shadow(0 0 16px rgba(140,190,255,.7)) drop-shadow(0 0 40px rgba(120,170,255,.35))!important}
+${C.sun}>.ev-disc{position:absolute;left:50%;top:50%;width:${C.disc}px;height:${C.disc}px;margin:${-C.disc/2}px 0 0 ${-C.disc/2}px;border-radius:50%;background:#0b0f24;opacity:0;transition:opacity 2s,transform 2s;pointer-events:none}
+html.ev-solar-total ${C.sun}>.ev-disc{opacity:1;box-shadow:0 0 0 2px rgba(255,255,240,.9),0 0 26px 8px rgba(255,250,225,.75),0 0 70px 24px rgba(220,230,255,.35)}
+html.ev-solar-annular ${C.sun}>.ev-disc{opacity:1;transform:scale(.82);box-shadow:0 0 0 ${Math.round(C.disc*.09)}px #ffd56a,0 0 24px 10px rgba(255,170,60,.6)}
+html.ev-solar-partial ${C.sun}>.ev-disc{opacity:.96;transform:translate(34%,-22%)}
+.ev-dim{position:absolute;inset:0;pointer-events:none;background:#080a28;opacity:0;transition:opacity 3s}
+html.ev-solar-total .ev-dim{opacity:.5}html.ev-solar-annular .ev-dim{opacity:.18}html.ev-solar-partial .ev-dim{opacity:.1}
+.ev-meteor{position:fixed;z-index:2;width:150px;height:3px;border-radius:2px;pointer-events:none;background:linear-gradient(90deg,transparent,#fff 75%,#e6f0ff);box-shadow:0 0 10px #fff,0 0 20px #9cc8ff}`;
+    document.head.appendChild(css);
+    const m=document.querySelector(C.moon),s=document.querySelector(C.sun),sky=document.querySelector(C.sky);
+    if(m&&!m.querySelector(".ev-shade"))m.insertAdjacentHTML("beforeend",'<i class="ev-shade"></i>');
+    if(s&&!s.querySelector(".ev-disc"))s.insertAdjacentHTML("beforeend",'<i class="ev-disc"></i>');
+    if(sky&&!sky.querySelector(".ev-dim")){const d=document.createElement("div");d.className="ev-dim";sky.appendChild(d)}
+    apply();setInterval(apply,60000);
+    // tap the sun or moon during an eclipse; tap a falling star during a meteor shower
+    document.addEventListener("click",e=>{
+      if(e.target.closest("button,a,input,select,textarea,label"))return;
+      const hit=(el,p)=>{if(!el)return false;const r=el.getBoundingClientRect();return e.clientX>=r.left-p&&e.clientX<=r.right+p&&e.clientY>=r.top-p&&e.clientY<=r.bottom+p};
+      const ev=today(),night=window.SKY&&SKY.isNight();
+      for(const st of document.querySelectorAll(".ev-meteor"))if(!st.dataset.got&&hit(st,22)){st.dataset.got=1;e.stopImmediatePropagation();
+        window.SND&&SND.play("meteor");caught++;st.style.boxShadow="0 0 18px #fff,0 0 40px #ffe27a";
+        if(caught===3){C.say("Stargazer",`You caught three falling stars during the ${ev.shower||"meteor shower"}.`);C.secret("meteor")}return}
+      if(e.target.closest(C.skip))return;
+      const lunar=night&&ev.lunar&&hit(document.querySelector(C.moon),12),solar=!night&&ev.solar&&hit(document.querySelector(C.sun).querySelector(".ev-disc"),20);
+      if(lunar||solar){e.stopImmediatePropagation();window.SND&&SND.play("eclipse");
+        C.say("Eclipse Chaser",lunar?{total:"A blood moon! Earth's shadow turned the moon red tonight.",partial:"Earth's shadow is taking a bite out of the moon tonight.",penumbral:"The moon looks a little dusky tonight. Earth's faint outer shadow is passing over it."}[ev.lunar]
+          :{total:"A total solar eclipse! The moon covered the sun completely.",annular:"A ring of fire! The moon is too small to cover the whole sun today.",partial:"The moon is taking a bite out of the sun today."}[ev.solar]);
+        C.secret("eclipse")}
+    },true);
+  }
+  function apply(){if(!C)return;const ev=today(),h=document.documentElement,night=!window.SKY||SKY.isNight();
+    const set=(c,on)=>h.classList.toggle(c,!!on);
+    ["total","partial","penumbral"].forEach(k=>set("ev-lunar-"+k,night&&ev.lunar===k));
+    ["total","annular","partial"].forEach(k=>set("ev-solar-"+k,!night&&ev.solar===k));
+    set("ev-super",ev.supermoon);set("ev-blue",ev.blue&&!ev.lunar);set("ev-shower",night&&ev.shower);
+    clearTimeout(meteorT);if(night&&ev.shower)meteorT=setTimeout(meteor,2000+Math.random()*5000)}
+  function meteor(){if(document.visibilityState==="visible"&&!R){const s=document.createElement("div");s.className="ev-meteor";
+      const x=Math.random()*innerWidth*.8,y=10+Math.random()*innerHeight*.3,a=18+Math.random()*22;s.style.left=x+"px";s.style.top=y+"px";document.body.appendChild(s);
+      const dx=260+Math.random()*200;s.animate([{transform:`translate(0,0) rotate(${a}deg)`,opacity:0},{opacity:1,offset:.15},{transform:`translate(${dx}px,${dx*Math.tan(a*Math.PI/180)}px) rotate(${a}deg)`,opacity:0}],{duration:1500,easing:"ease-in"}).onfinish=()=>s.remove()}
+    const ev=today();if((!window.SKY||SKY.isNight())&&ev.shower)meteorT=setTimeout(meteor,3000+Math.random()*7000)}
+  return {today,init,apply,meteor};
+})();
+window.EV=EV;
+/* "First of the day": after a date is over everywhere, ask the server whether this device finished that date's Daily soonest
+   after its own midnight (only the minutes after midnight are ever sent). */
+YS.checkFirst=async function(onWin){
+  if(window.dropinDone||!navigator.onLine)return;const key="dropin:firstchk",done=store.get(key)||[];
+  const add=(d,n)=>new Date(Date.parse(d+"T12:00:00Z")+n*864e5).toISOString().slice(0,10);
+  for(const d of [add(dayKey,-1),add(dayKey,-2),add(dayKey,-3)]){
+    if(done.includes(d)||!store.get(`dropin3:${d}:main`))continue;
+    try{const API=location.hostname.endsWith("discordsays.com")?"":"https://drop-in-daily-bot.towfiq-aziz11.workers.dev",dev=store.get("dropin:dev");if(!dev)return;
+      const r=await fetch(`${API}/stats/first?day=${d}&dev=${dev}`);if(!r.ok)continue;const j=await r.json();if(j.pending)continue;
+      done.push(d);store.set(key,done.slice(-10));if(j.first)onWin(d)}catch(e){}}
+};
+/* Drop-In: sky events, the first-of-the-day award, and things that drift across the sky (a pizza, a banana, a burger, a rubber duck).
+   They're plain everyday objects, not any game's characters, and each one reacts to taps in its own way. */
+{EV.init({moon:".fn-moon",sun:".fn-sun",sky:".fn-sky",disc:70,skip:"button,a,input,select,textarea,label,.tabs,.egg-toast,#app",
+  say:(t,m)=>toast(t,m,"#c9a7ff"),secret:id=>secret(id)});
+ const prettyDay=d=>new Date(d+"T12:00:00").toLocaleDateString(undefined,{month:"long",day:"numeric"});
+ setTimeout(()=>YS.checkFirst(d=>{toast("First Drop",`You finished the ${prettyDay(d)} Daily Drop sooner after your midnight than anyone else did after theirs.`,"#f2c200");secret("first")}),4000);
+
+ const css=document.createElement("style");css.textContent=`
+.fn-float{position:fixed;z-index:3;left:-170px;border:0;padding:0;background:none;cursor:pointer;filter:drop-shadow(0 6px 10px rgba(0,0,40,.25));touch-action:manipulation}
+.fn-float svg{display:block;width:100%;height:100%;overflow:visible}
+.fn-float .bob{animation:fnBob 2.4s ease-in-out infinite}
+@keyframes fnBob{50%{transform:translateY(-8px) rotate(3deg)}}
+.fn-float.pizza{width:110px;height:110px}.fn-float.banana{width:130px;height:90px}.fn-float.duck{width:96px;height:150px}
+.fn-float.burger{width:110px;height:200px}
+.fn-burger{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column-reverse;align-items:center}
+.fn-burger i{display:block;width:96px;flex:none}
+.fn-burger .bun{height:22px;background:#e0a052;border-radius:4px 4px 18px 18px;box-shadow:inset 0 -4px 0 #c4823a}
+.fn-burger .patty{height:16px;width:100px;background:#6b3a1e;border-radius:8px;box-shadow:inset 0 -3px 0 #4e2913}
+.fn-burger .cheese{height:7px;width:104px;background:#ffcf3a;clip-path:polygon(0 0,100% 0,100% 60%,82% 60%,76% 100%,70% 60%,30% 60%,24% 100%,18% 60%,0 60%)}
+.fn-burger .lettuce{height:9px;width:106px;background:#5cc244;border-radius:6px;clip-path:polygon(0 30%,8% 0,16% 30%,24% 0,32% 30%,40% 0,48% 30%,56% 0,64% 30%,72% 0,80% 30%,88% 0,96% 30%,100% 10%,100% 100%,0 100%)}
+.fn-burger .tomato{height:9px;width:92px;background:#e8473a;border-radius:5px}
+.fn-burger .top{height:30px;background:radial-gradient(circle at 30% 40%,#fff3c4 0 2px,transparent 3px),radial-gradient(circle at 55% 30%,#fff3c4 0 2px,transparent 3px),radial-gradient(circle at 72% 50%,#fff3c4 0 2px,transparent 3px),#e0a052;border-radius:48px 48px 6px 6px;box-shadow:inset 0 -4px 0 #c4823a}
+.fn-peel{position:fixed;z-index:2;width:46px;height:30px;pointer-events:none}`;document.head.appendChild(css);
+
+ const pizzaSVG=()=>{let s='<svg viewBox="-50 -50 100 100" aria-hidden="true"><g class="bob">';
+   for(let k=0;k<8;k++){const a0=k*Math.PI/4,a1=a0+Math.PI/4,p=(r,a)=>`${(r*Math.cos(a)).toFixed(1)} ${(r*Math.sin(a)).toFixed(1)}`,mid=a0+Math.PI/8;
+     s+=`<g class="sl"><path d="M0 0L${p(46,a0)}A46 46 0 0 1 ${p(46,a1)}Z" fill="#e3a043"/><path d="M0 0L${p(39,a0)}A39 39 0 0 1 ${p(39,a1)}Z" fill="#ffd45c"/>
+       <circle cx="${(24*Math.cos(mid)).toFixed(1)}" cy="${(24*Math.sin(mid)).toFixed(1)}" r="5" fill="#d0402f"/><path d="M0 0L${p(46,a0)}" stroke="#c9832e" stroke-width="1"/></g>`}
+   return s+'</g></svg>'};
+ const bananaSVG=`<svg viewBox="0 0 130 90" aria-hidden="true"><g class="bob">
+   <path class="fruit" d="M14 46Q62 96 116 28Q66 68 14 46Z" fill="#fff4c2"/>
+   <path class="skin" d="M10 44Q62 100 120 26Q118 22 114 24Q66 66 14 40Z" fill="#ffd93b" stroke="#c99a12" stroke-width="2"/>
+   <path d="M116 26l6-6 3 3-5 5z" fill="#6b4a1e"/><path d="M10 44l-6 2 2 4 6-2z" fill="#6b4a1e"/>
+   <path class="f1" d="M114 26Q126 40 122 58Q114 44 108 32Z" fill="#ffd93b" stroke="#c99a12" stroke-width="2" opacity="0"/>
+   <path class="f2" d="M112 24Q132 22 140 36Q124 32 110 30Z" fill="#ffd93b" stroke="#c99a12" stroke-width="2" opacity="0"/>
+   <path class="f3" d="M110 24Q112 6 124 0Q118 14 114 28Z" fill="#ffd93b" stroke="#c99a12" stroke-width="2" opacity="0"/></g></svg>`;
+ const duckSVG=`<svg viewBox="0 0 96 150" aria-hidden="true"><g class="bob"><g class="balloon"><ellipse cx="48" cy="30" rx="24" ry="28" fill="#ff5a6e"/><ellipse cx="40" cy="20" rx="6" ry="9" fill="#fff" opacity=".35"/>
+   <path d="M44 57h8l-4 6z" fill="#e0465a"/><path d="M48 63Q42 80 50 96" stroke="#fff" stroke-width="1.5" fill="none"/></g>
+   <g class="duck"><ellipse cx="46" cy="128" rx="28" ry="17" fill="#ffd93b"/><circle cx="58" cy="106" r="14" fill="#ffd93b"/><path d="M70 104q12 2 14 6-6 4-15 3z" fill="#ff8a1e"/>
+   <circle cx="61" cy="102" r="2.6" fill="#1a1a2e"/><path d="M26 124q10-8 22 2-12 6-22-2z" fill="#f2c200"/></g></g></svg>`;
+
+ let on=null;
+ function launch(kind){if(on||document.querySelector(".fn-bus")||document.visibilityState!=="visible")return;
+   const b=document.createElement("button");b.className="fn-float "+kind;on=b;
+   b.setAttribute("aria-label",{pizza:"A pizza drifting by",banana:"A banana drifting by",burger:"A burger drifting by",duck:"A rubber duck on a balloon"}[kind]);
+   b.style.top=(kind==="burger"?14:10)+Math.random()*22+"vh";
+   b.innerHTML=kind==="pizza"?pizzaSVG():kind==="banana"?bananaSVG:kind==="duck"?duckSVG:'<div class="fn-burger bob"><i class="bun"></i></div>';
+   document.body.appendChild(b);
+   const fly=b.animate([{transform:"translate(0,0)"},{transform:`translate(${innerWidth+360}px,-20px)`}],{duration:R?10:26000,easing:"linear"});
+   fly.onfinish=()=>{b.remove();on=null};
+   let n=0;const done=()=>b.dataset.done=1,isDone=()=>b.dataset.done;
+   b.onclick=()=>{if(isDone())return;n++;
+     if(kind==="pizza"){const sl=b.querySelectorAll(".sl:not(.gone)");const s=sl[Math.random()*sl.length|0];if(!s)return;s.classList.add("gone");window.SND&&SND.play("chomp");
+       s.animate([{opacity:1,transform:"scale(1)"},{opacity:0,transform:"scale(.6)"}],{duration:220,fill:"forwards"});
+       if(sl.length===1){done();toast("Pizza Party","Every last slice, gone. Not even the crust survived.","#ff8a3d");secret("pizza")}}
+     else if(kind==="banana"){window.SND&&SND.play("peel",n);
+       if(n<=3){b.querySelector(".f"+n).setAttribute("opacity","1");b.querySelector(".skin").setAttribute("opacity",String(1-n*.28))}
+       if(n===3){done();setTimeout(()=>{window.SND&&SND.play("chomp");b.querySelector(".fruit").setAttribute("opacity","0");b.querySelector(".skin").setAttribute("opacity","0");dropPeel(b)},350)}}
+     else if(kind==="duck"){window.SND&&SND.play("squeak",n);b.querySelector(".duck").animate([{transform:"scale(1)"},{transform:"scale(1.12,.88)"},{transform:"scale(1)"}],{duration:200});
+       if(n===5){done();const d=b.querySelector(".duck");d.style.transformOrigin="48px 120px";d.style.transformBox="view-box";
+         d.animate([{transform:"rotate(0)"},{transform:"rotate(360deg)"}],{duration:600});fly.playbackRate=4;
+         toast("Squeaky Clean","Five squeaks, one happy rubber duck.","#ffd93b");secret("duck")}}
+     else if(kind==="burger"){const st=b.querySelector(".fn-burger"),L=["patty","cheese","lettuce","tomato"];
+       if(n<10){st.insertAdjacentHTML("beforeend",`<i class="${n===9?"top":L[(n-1)%4]}"></i>`);window.SND&&SND.play("layer",n);
+         st.lastElementChild.animate([{transform:"translateY(-40px)",opacity:0},{transform:"translateY(0)",opacity:1}],{duration:180,easing:"ease-in"});
+         if(n===9)st.animate([{transform:"rotate(0)"},{transform:"rotate(-5deg)"},{transform:"rotate(5deg)"},{transform:"rotate(0)"}],{duration:500,iterations:2})}
+       else{done();window.SND&&SND.play("topple");st.style.animation="none";
+         [...st.children].forEach((l,k)=>l.animate([{transform:"translate(0,0) rotate(0)"},{transform:`translate(${(k%2?1:-1)*(30+k*14)}px,${innerHeight*.6}px) rotate(${(k%2?1:-1)*(90+k*30)}deg)`,opacity:0}],{duration:900+k*60,easing:"cubic-bezier(.5,0,.9,.6)",fill:"forwards"}));
+         toast("Tall Order","Ten layers was one too many. The burger toppled over.","#e0a052");secret("burger")}}};
+   return b}
+ // the empty peel falls and lands on the island
+ function dropPeel(b){const r=b.getBoundingClientRect(),isle=document.querySelector(".fn-isle");const ir=isle?isle.getBoundingClientRect():{top:innerHeight*.75,left:0,width:innerWidth};
+   const p=document.createElement("div");p.className="fn-peel";p.innerHTML='<svg viewBox="0 0 46 30"><path d="M4 22Q22 30 42 18Q30 16 22 6Q20 18 4 22Z" fill="#ffd93b" stroke="#c99a12" stroke-width="2"/><path d="M22 6l2-5" stroke="#6b4a1e" stroke-width="3"/></svg>';
+   p.style.left=r.left+r.width/2-23+"px";p.style.top=r.top+r.height/2+"px";document.body.appendChild(p);
+   const tx=ir.left+ir.width*(.35+Math.random()*.3)-(r.left+r.width/2),ty=ir.top+ir.height*.45-(r.top+r.height/2);
+   p.animate([{transform:"translate(0,0) rotate(0)"},{transform:`translate(${tx}px,${ty}px) rotate(540deg)`}],{duration:R?10:1400,easing:"cubic-bezier(.4,0,.9,.7)",fill:"forwards"}).onfinish=()=>{
+     window.SND&&SND.play("slip");toast("Peel Out","The banana peel landed on the island. Watch your step down there.","#ffd93b");secret("banana");
+     setTimeout(()=>{p.animate([{opacity:1},{opacity:0}],{duration:1500,fill:"forwards"}).onfinish=()=>p.remove()},60000)}}
+ (function loop(){setTimeout(()=>{if(Math.random()<.35&&!playing())launch(["pizza","banana","burger","duck"][Math.random()*4|0]);loop()},60000+Math.random()*60000)})();
+ window.__floater=k=>launch(k||["pizza","banana","burger","duck"][Math.random()*4|0]);
+}
 /* Drop-In: the island comes closer once you've dropped in, the Battle Bus flies over, a loot llama grazes on the island,
    and the full moon is worth a tap */
 {const css=document.createElement("style");css.textContent=`
@@ -1337,6 +1507,16 @@ D.crate=()=>{boom(0,.45);noise({dur:.18,vol:.28,type:"lowpass",freq:800});noise(
 D.titleTap=lvl=>{const n=[67,71,74,79,84][Math.max(1,Math.min(5,lvl))-1];
   noise({dur:.15,vol:.12,type:"bandpass",freq:1000,sweep:5000,q:2});tone({t:.05,n,type:"sawtooth",dur:.25,vol:.08,cut:4000,bus:verb()});tone({t:.05,n:n+12,type:"sine",dur:.35,vol:.08,bus:verb()});if(lvl>=5)D.mythic()};
 
+// sky events
+D.meteor=()=>{[0,.05,.1,.15,.2].forEach((t,k)=>tone({t,n:96-k*2,type:"triangle",dur:.12,vol:.07-k*.01}));noise({dur:.35,vol:.05,type:"highpass",freq:5000})};
+D.eclipse=()=>{tone({f:110,slide:82,type:"triangle",dur:2.2,vol:.16,att:.6});tone({f:165,slide:123,type:"sine",dur:2.2,vol:.1,att:.8});[0,.5,1,1.5].forEach((t,k)=>tone({t:.3+t,n:84-k*3,type:"sine",dur:.6,vol:.05}))};
+// things drifting across the sky
+D.chomp=()=>{noise({dur:.06,vol:.3,type:"bandpass",freq:900,q:3});noise({t:.09,dur:.05,vol:.22,type:"bandpass",freq:700,q:3})};
+D.peel=(n=1)=>{noise({dur:.18,vol:.18,type:"bandpass",freq:2200+n*300,sweep:1200,q:2});tone({t:.02,f:400+n*80,slide:900+n*80,type:"triangle",dur:.12,vol:.06})};
+D.slip=()=>{tone({f:900,slide:180,type:"triangle",dur:.45,vol:.14});noise({t:.42,dur:.12,vol:.25,type:"lowpass",freq:500})};
+D.squeak=(n=1)=>{const f=700+n*90;tone({f,slide:f*1.6,type:"square",dur:.09,vol:.08,cut:3000});tone({t:.09,f:f*1.6,slide:f*1.1,type:"square",dur:.1,vol:.07,cut:3000})};
+D.layer=(n=1)=>{noise({dur:.05,vol:.22,type:"lowpass",freq:700});tone({f:180+n*22,type:"triangle",dur:.09,vol:.14})};
+D.topple=()=>{[0,.08,.16,.26,.36].forEach((t,k)=>noise({t,dur:.08,vol:.25-k*.03,type:"lowpass",freq:600-k*60}));tone({f:420,slide:90,type:"square",dur:.6,vol:.07,cut:1500})};
 D.busHorn=()=>{[0,.26].forEach(t=>[349,440].forEach(f=>[-8,8].forEach(dt=>tone({t,f,type:"sawtooth",dur:.2,vol:.06,cut:1300,detune:dt,bus:verb()}))));noise({t:.1,dur:1.4,vol:.05,type:"bandpass",freq:500,sweep:900,q:.7})};
 
 /* ---- music: a small step sequencer that plans a little ahead, and skips late notes rather than cramming them in ---- */

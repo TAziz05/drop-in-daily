@@ -12,6 +12,7 @@ same Daily Drop. The day changes at midnight Eastern time.
 - `/leaderboard` – today, this week or all time.
 - `/stats` – streak, average and score spread for you or someone else.
 - `/achievements` – milestones and secrets found, for you or someone else.
+- `/compare` – your stats and achievements next to another player's, or pick two players to compare.
 - `/setchannel` (admins) – post "today's drop is live" every morning, with yesterday's recap.
 - `/stopdaily` (admins) and `/help`.
 

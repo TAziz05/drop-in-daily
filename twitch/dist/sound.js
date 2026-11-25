@@ -149,6 +149,16 @@ D.crate=()=>{boom(0,.45);noise({dur:.18,vol:.28,type:"lowpass",freq:800});noise(
 D.titleTap=lvl=>{const n=[67,71,74,79,84][Math.max(1,Math.min(5,lvl))-1];
   noise({dur:.15,vol:.12,type:"bandpass",freq:1000,sweep:5000,q:2});tone({t:.05,n,type:"sawtooth",dur:.25,vol:.08,cut:4000,bus:verb()});tone({t:.05,n:n+12,type:"sine",dur:.35,vol:.08,bus:verb()});if(lvl>=5)D.mythic()};
 
+// sky events
+D.meteor=()=>{[0,.05,.1,.15,.2].forEach((t,k)=>tone({t,n:96-k*2,type:"triangle",dur:.12,vol:.07-k*.01}));noise({dur:.35,vol:.05,type:"highpass",freq:5000})};
+D.eclipse=()=>{tone({f:110,slide:82,type:"triangle",dur:2.2,vol:.16,att:.6});tone({f:165,slide:123,type:"sine",dur:2.2,vol:.1,att:.8});[0,.5,1,1.5].forEach((t,k)=>tone({t:.3+t,n:84-k*3,type:"sine",dur:.6,vol:.05}))};
+// things drifting across the sky
+D.chomp=()=>{noise({dur:.06,vol:.3,type:"bandpass",freq:900,q:3});noise({t:.09,dur:.05,vol:.22,type:"bandpass",freq:700,q:3})};
+D.peel=(n=1)=>{noise({dur:.18,vol:.18,type:"bandpass",freq:2200+n*300,sweep:1200,q:2});tone({t:.02,f:400+n*80,slide:900+n*80,type:"triangle",dur:.12,vol:.06})};
+D.slip=()=>{tone({f:900,slide:180,type:"triangle",dur:.45,vol:.14});noise({t:.42,dur:.12,vol:.25,type:"lowpass",freq:500})};
+D.squeak=(n=1)=>{const f=700+n*90;tone({f,slide:f*1.6,type:"square",dur:.09,vol:.08,cut:3000});tone({t:.09,f:f*1.6,slide:f*1.1,type:"square",dur:.1,vol:.07,cut:3000})};
+D.layer=(n=1)=>{noise({dur:.05,vol:.22,type:"lowpass",freq:700});tone({f:180+n*22,type:"triangle",dur:.09,vol:.14})};
+D.topple=()=>{[0,.08,.16,.26,.36].forEach((t,k)=>noise({t,dur:.08,vol:.25-k*.03,type:"lowpass",freq:600-k*60}));tone({f:420,slide:90,type:"square",dur:.6,vol:.07,cut:1500})};
 D.busHorn=()=>{[0,.26].forEach(t=>[349,440].forEach(f=>[-8,8].forEach(dt=>tone({t,f,type:"sawtooth",dur:.2,vol:.06,cut:1300,detune:dt,bus:verb()}))));noise({t:.1,dur:1.4,vol:.05,type:"bandpass",freq:500,sweep:900,q:.7})};
 
 /* ---- music: a small step sequencer that plans a little ahead, and skips late notes rather than cramming them in ---- */
