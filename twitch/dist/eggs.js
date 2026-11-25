@@ -55,7 +55,7 @@ const EGGS=[
  ["banana","Peel Out","Peeled a banana on the island","Something yellow turns up on the island now and then. Peel it."],
  ["burger","Tall Order","Stacked a burger until it toppled","A lonely bun sits on the island sometimes. Build on it."],
  ["duck","Squeaky Clean","Squeaked a rubber duck five times","Very rarely, something squeaky washes up on the island's shore."],
- ["meteor","Stargazer","Caught three falling stars in a meteor shower","A few nights a year, the sky rains stars."],
+ ["meteor","Brace for Impact","Caught three falling stars in a meteor shower","A few nights a year, the sky rains stars."],
  ["eclipse","Eclipse Chaser","Tapped the sun or moon during an eclipse","On a real eclipse day, tap whatever goes dark."],
  ["first","First Drop","Finished a Daily Drop sooner after midnight than anyone else","Be the quickest after your own midnight. It's decided the next day."]];
 let tEl=null,tTimer,tQueue=[];
@@ -273,7 +273,7 @@ html.ev-solar-total .ev-dim{opacity:.5}html.ev-solar-annular .ev-dim{opacity:.18
       const ev=today(),night=window.SKY&&SKY.isNight();
       for(const st of document.querySelectorAll(".ev-meteor"))if(!st.dataset.got&&hit(st,44)){st.dataset.got=1;e.stopImmediatePropagation();
         window.SND&&SND.play("meteor");caught++;st.style.boxShadow="0 0 18px #fff,0 0 40px #ffe27a";
-        if(caught===3){C.say("Stargazer",`You caught three falling stars during the ${ev.shower||"meteor shower"}.`);C.secret("meteor")}return}
+        if(caught===3){C.say(C.meteorName||"Meteor Watcher",`You caught three falling stars during the ${ev.shower||"meteor shower"}.`);C.secret("meteor")}return}
       if(e.target.closest(C.skip))return;
       const lunar=night&&ev.lunar&&hit(document.querySelector(C.moon),12),solar=!night&&ev.solar&&hit(document.querySelector(C.sun).querySelector(".ev-disc"),20);
       if(lunar||solar){e.stopImmediatePropagation();window.SND&&SND.play("eclipse");
@@ -312,7 +312,7 @@ YS.checkFirst=async function(onWin){
 };
 /* Drop-In: sky events, the first-of-the-day award, and food that turns up on the island now and then (a pizza, a banana, a burger,
    a rubber duck washed ashore). They're plain everyday objects, not any game's characters, and each one reacts to taps in its own way. */
-{EV.init({moon:".fn-moon",sun:".fn-sun",sky:".fn-sky",behind:".fn-clouds",horizon:".fn-isle",disc:70,skip:"button,a,input,select,textarea,label,.tabs,.egg-toast,#app",
+{EV.init({moon:".fn-moon",sun:".fn-sun",sky:".fn-sky",behind:".fn-clouds",horizon:".fn-isle",meteorName:"Brace for Impact",disc:70,skip:"button,a,input,select,textarea,label,.tabs,.egg-toast,#app",
   say:(t,m)=>toast(t,m,"#c9a7ff"),secret:id=>secret(id)});
  const prettyDay=d=>new Date(d+"T12:00:00").toLocaleDateString(undefined,{month:"long",day:"numeric"});
  setTimeout(()=>YS.checkFirst(d=>{toast("First Drop",`You finished the ${prettyDay(d)} Daily Drop sooner after your midnight than anyone else did after theirs.`,"#f2c200");secret("first")}),4000);

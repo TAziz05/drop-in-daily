@@ -25,7 +25,7 @@ export const EGGS = [
   ["banana", "Peel Out", "Peeled a banana on the island"],
   ["burger", "Tall Order", "Stacked a burger until it toppled"],
   ["duck", "Squeaky Clean", "Squeaked a rubber duck five times"],
-  ["meteor", "Stargazer", "Caught three falling stars in a meteor shower"],
+  ["meteor", "Brace for Impact", "Caught three falling stars in a meteor shower"],
   ["eclipse", "Eclipse Chaser", "Tapped the sun or moon during an eclipse"],
 ];
 
