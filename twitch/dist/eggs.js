@@ -26,7 +26,7 @@ function makeAch(C){
     app.innerHTML=`<div id="ach-root"><h2>Achievements</h2><p class="muted">${have} of ${total} unlocked. Milestones come from playing; secrets stay hidden until you find them.</p>
      <div class="ach-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>${window.YS?YS.mineHTML():""}
      <h3 class="ach-h">Milestones</h3><ul class="ach-list">${C.miles.map(m=>{const [c,g]=prog(m,st),ok=c>=g;
-       return `<li class="${ok?"":"no"}">${C.medal(ok,"mile")}<div class="ach-txt"><b>${m[1]}</b><span>${m[2]}</span>${!ok&&g>1?`<div class="ach-mini"><span style="width:${100*c/g}%"></span></div><span class="ach-n">${c.toLocaleString()}/${g.toLocaleString()}</span>`:""}</div></li>`}).join("")}</ul>
+       return `<li class="${ok?"":"no"}">${C.medal(ok,"mile",m[0])}<div class="ach-txt"><b>${m[1]}</b><span>${m[2]}</span>${!ok&&g>1?`<div class="ach-mini"><span style="width:${100*c/g}%"></span></div><span class="ach-n">${c.toLocaleString()}/${g.toLocaleString()}</span>`:""}</div></li>`}).join("")}</ul>
      <h3 class="ach-h">Secrets <small>${found.size}/${C.eggs.length}</small></h3><ul class="ach-list">${C.eggs.map(([id,n,d,h])=>found.has(id)
        ?`<li>${C.medal(true,"secret")}<div class="ach-txt"><b>${n}</b><span>${d}</span><span class="ach-n">${times(counts[id]||1)}</span></div></li>`
        :`<li class="no">${C.medal(false,"secret")}<div class="ach-txt"><b>Secret achievement</b><span>Find it to reveal it.</span><details><summary>Show hint</summary><span>${h}</span></details></div></li>`).join("")}</ul></div>`}
@@ -64,7 +64,8 @@ function toast(title,html,c="#ffd53d",ms=7000){if(tEl){tQueue.push([title,html,c
   d.innerHTML=`<b>${esc(title)}</b><p>${html}</p><button class="x" aria-label="Close">×</button>`;document.body.appendChild(d);tEl=d;
   const close=()=>{if(tEl!==d)return;clearTimeout(tTimer);d.classList.add("out");setTimeout(()=>d.remove(),250);tEl=null;const n=tQueue.shift();if(n)setTimeout(()=>toast(...n),260)};
   d.querySelector(".x").onclick=close;tTimer=setTimeout(close,ms)}
-const medal=(on,kind)=>`<svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M17 2 30 9.5v15L17 32 4 24.5v-15z" fill="${on?(kind==="secret"?"#c56bff":"#f2c200"):"#dfe7f6"}" stroke="${on?"#0d1b3d":"#9fb0d0"}" stroke-width="2"/>${on?`<path d="m17 9 2.4 5 5.4.6-4 3.7 1.1 5.3L17 21l-4.9 2.6 1.1-5.3-4-3.7 5.4-.6z" fill="#fff"/>`:kind==="secret"?`<text x="17" y="22.5" text-anchor="middle" font-size="15" font-weight="700" fill="#9fb0d0">?</text>`:`<path d="M12 16v-3a5 5 0 0 1 10 0v3M11 16h12v8H11z" fill="none" stroke="#9fb0d0" stroke-width="2"/>`}</svg>`;
+const MTYPE=id=>/^(first|squad|vr|untouch)$/.test(id)?"#3d9bff":/^d\d/.test(id)?"#4fc23a":/^w\d/.test(id)?"#f08a24":/^s\d/.test(id)?"#ff4b3e":id==="myth"?"#f2c200":id==="hunter"?"#ff4fa3":id?"#1fc3c7":"#f2c200";
+const medal=(on,kind,id)=>`<svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M17 2 30 9.5v15L17 32 4 24.5v-15z" fill="${on?(kind==="secret"?"#c56bff":MTYPE(id)):"#dfe7f6"}" stroke="${on?"#0d1b3d":"#9fb0d0"}" stroke-width="2"/>${on?`<path d="m17 9 2.4 5 5.4.6-4 3.7 1.1 5.3L17 21l-4.9 2.6 1.1-5.3-4-3.7 5.4-.6z" fill="#fff"/>`:kind==="secret"?`<text x="17" y="22.5" text-anchor="middle" font-size="15" font-weight="700" fill="#9fb0d0">?</text>`:`<path d="M12 16v-3a5 5 0 0 1 10 0v3M11 16h12v8H11z" fill="none" stroke="#9fb0d0" stroke-width="2"/>`}</svg>`;
 const ACH=makeAch({pfx:"dropin",dayRe:/^dropin3:(\d{4}-\d{2}-\d{2}):(main|e|m|h|x)$/,eggs:EGGS,medal,
   notify:(t,txt)=>{const sec=t.startsWith("Secret");toast(t,esc(txt),sec?"#c56bff":"#f2c200");setTimeout(()=>window.SND&&SND.play(sec?"secret":"achievement"),sec?700:0)},
   miles:[
