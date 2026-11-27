@@ -89,7 +89,7 @@ const ACH=makeAch({pfx:"dropin",dayRe:/^dropin3:(\d{4}-\d{2}-\d{2}):(main|e|m|h|
    ["hunter","Secret Hunter","Find every secret",s=>[s.secrets,EGGS.length]]]});
 window.gameAch=ACH;
 const secret=id=>ACH.secret(id);
-const fact=()=>{const pool=Q.filter(q=>(q.t==="e"||q.t==="m")&&!q.clue&&q.q.length<130&&!/this season|these|this one/i.test(q.q)),q=pool[Math.random()*pool.length|0];return `${esc(q.q)} <strong>${esc(q.a)}</strong>. <span class="src">${srcLink(q.s)}</span>`};
+const fact=()=>{const pool=Q.filter(q=>(q.t==="e"||q.t==="m")&&!q.clue&&q.q.length<130&&!/this season|these|this one/i.test(q.q)),q=pool[Math.random()*pool.length|0];window.__lastFact=q;return `${esc(q.q)} <strong>${esc(q.a)}</strong>. <span class="src">${srcLink(q.s)}</span>`};
 const playing=()=>!!app.querySelector(".opt")||!!document.querySelector(".fn-jump");
 
 /* 1. supply drops */
@@ -103,7 +103,7 @@ function spawnCrate(){
   c.onclick=()=>{fall.pause();c.disabled=true;window.SND&&SND.play("crate");
     if(!R){c.animate([{transform:getComputedStyle(c).transform},{transform:getComputedStyle(c).transform+" scale(1.3)",opacity:0}],{duration:300,fill:"forwards"});confetti(1500,90)}
     setTimeout(()=>{c.remove();schedule()},320);
-    toast("Supply drop!","Loot fact: "+fact(),"#59a8ff",10000);secret("crate")};
+    toast("Supply drop!","Loot fact: "+fact(),"#59a8ff",10000);secret("crate");setTimeout(()=>window.__locker&&window.__locker.collect(window.__lastFact),1200)};
 }
 function schedule(ms){setTimeout(spawnCrate,ms||40000+Math.random()*30000)}
 schedule(9000);
@@ -426,10 +426,10 @@ YS.checkFirst=async function(onWin){
  const _a=answer;answer=function(btn){const q=S&&S.qs&&S.qs[S.i],daily=S&&(S.mode==="main"||S.mode==="daily");_a(btn);if(q){const r=record(q,btn.dataset.o===q.a,daily);save();note(r)}};
  const _ea=endlessAnswer;endlessAnswer=function(btn){const q=S&&S.cur;_ea(btn);if(q){const r=record(q,btn.dataset.o===q.a,false);save();note(r)}};
  // first time: everything from past Daily sets counts
- if(!store.get("dropin:lockerfill")){try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);
+ if(!store.get("dropin:lockerfill2")){try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);
      if(!/^dropin3:\d{4}-\d{2}-\d{2}:[a-z]+$/.test(k||""))continue;const v=JSON.parse(localStorage.getItem(k));
      if(v&&Array.isArray(v.ids))v.ids.forEach((id,j)=>{if(QBYID[id])record(QBYID[id],!!(v.marks&&v.marks[j]),true)})}}catch(e){}
-   store.set("dropin:lockerfill",1);save()}
+   store.set("dropin:lockerfill2",1);save()}
  store.set("dropin:collsum",summary());
 
  const css=document.createElement("style");css.textContent=`
@@ -497,7 +497,7 @@ YS.checkFirst=async function(onWin){
  const tab=document.createElement("button");tab.className="tab";tab.setAttribute("role","tab");tab.id="tab-locker";tab.dataset.v="locker";tab.textContent="Locker";
  const achT=document.getElementById("tab-ach");achT?achT.before(tab):document.querySelector(".tabs").appendChild(tab);
  tab.onclick=()=>{S=null;document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",String(b===tab)));render();scrollTo({top:0})};
- window.__locker={record,lk:()=>lk,render};
+ window.__locker={record,lk:()=>lk,render,collect(q){if(!q)return;const r=record(q,true,false);save();note(r)}};
 }
 /* Drop-In: the island comes closer once you've dropped in, the Battle Bus flies over, a loot llama grazes on the island,
    and the full moon is worth a tap */
