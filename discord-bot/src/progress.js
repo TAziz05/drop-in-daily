@@ -42,6 +42,12 @@ export const MILES = [
   ["s25", "Unstoppable", "Reach a 25-question streak in Endless", s => [s.best, 25]],
   ["w7", "Locked In", "Play the Daily Drop 7 days in a row", s => [s.streak, 7]],
   ["w30", "No Days Off", "Play the Daily Drop 30 days in a row", s => [s.streak, 30]],
+  ["tier100", "Tier Climber", "Unlock 100 Battle Pass tiers", s => [s.tiers || 0, 100]],
+  ["tier500", "Tier Grinder", "Unlock 500 Battle Pass tiers", s => [s.tiers || 0, 500]],
+  ["maxpass", "Max Tier", "Max out a Battle Pass", s => [s.maxed || 0, 1]],
+  ["chapter", "Chapter Complete", "Max every Battle Pass in one chapter", s => [s.chapterDone || 0, 1]],
+  ["locker", "Fully Stocked", "Get all 8 Locker slots to Legendary", s => [s.legendary || 0, 8]],
+  ["allpass", "#1 Victory Royale", "Max out every Battle Pass", s => [s.maxed || 0, s.passes || 44]],
   ["hunter", "Secret Hunter", "Find every secret", s => [s.secrets, EGGS.length]],
 ];
 
@@ -94,6 +100,7 @@ export function statsFrom(keys, tierOf = () => null) {
     perfectDay: list.some(d => SETS.every(k => perfect(d[k]))) ? 1 : 0,
     topRight, best: endless.best || 0,
     streak: (() => { const ds = Object.keys(days).filter(d => days[d].main).sort(); let b = 0, r = 0; ds.forEach((d, i) => { r = i && Math.round((Date.parse(d) - Date.parse(ds[i - 1])) / 864e5) === 1 ? r + 1 : 1; b = Math.max(b, r); }); return b; })(),
+    ...parse(keys?.[GAME.prefix + ":collsum"], {}),
     secrets: Array.isArray(secrets) ? secrets.filter(id => EGGS.some(e => e[0] === id)).length : 0,
   };
 }

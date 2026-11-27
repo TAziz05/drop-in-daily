@@ -150,7 +150,8 @@ D.titleTap=lvl=>{const n=[67,71,74,79,84][Math.max(1,Math.min(5,lvl))-1];
   noise({dur:.15,vol:.12,type:"bandpass",freq:1000,sweep:5000,q:2});tone({t:.05,n,type:"sawtooth",dur:.25,vol:.08,cut:4000,bus:verb()});tone({t:.05,n:n+12,type:"sine",dur:.35,vol:.08,bus:verb()});if(lvl>=5)D.mythic()};
 
 // sky events
-D.meteor=()=>{[0,.05,.1,.15,.2].forEach((t,k)=>tone({t,n:96-k*2,type:"triangle",dur:.12,vol:.07-k*.01}));noise({dur:.35,vol:.05,type:"highpass",freq:5000})};
+// Drop-In's falling star: a whoosh, a sparkle and a soft impact
+D.meteor=()=>{noise({dur:.55,vol:.13,type:"bandpass",freq:5200,sweep:700,q:1.1});tone({f:1900,slide:520,type:"sine",dur:.45,vol:.05});glock(.06,96,.08);glock(.14,103,.06);tone({t:.4,f:130,slide:48,type:"sine",dur:.3,vol:.18});noise({t:.4,dur:.18,vol:.08,type:"lowpass",freq:500})};
 D.eclipse=()=>{tone({f:110,slide:82,type:"triangle",dur:2.2,vol:.16,att:.6});tone({f:165,slide:123,type:"sine",dur:2.2,vol:.1,att:.8});[0,.5,1,1.5].forEach((t,k)=>tone({t:.3+t,n:84-k*3,type:"sine",dur:.6,vol:.05}))};
 // things drifting across the sky
 D.chomp=()=>{noise({dur:.06,vol:.3,type:"bandpass",freq:900,q:3});noise({t:.09,dur:.05,vol:.22,type:"bandpass",freq:700,q:3})};
@@ -159,6 +160,11 @@ D.slip=()=>{tone({f:900,slide:180,type:"triangle",dur:.45,vol:.14});noise({t:.42
 D.squeak=(n=1)=>{const f=700+n*90;tone({f,slide:f*1.6,type:"square",dur:.09,vol:.08,cut:3000});tone({t:.09,f:f*1.6,slide:f*1.1,type:"square",dur:.1,vol:.07,cut:3000})};
 D.layer=(n=1)=>{noise({dur:.05,vol:.22,type:"lowpass",freq:700});tone({f:180+n*22,type:"triangle",dur:.09,vol:.14})};
 D.topple=()=>{[0,.08,.16,.26,.36].forEach((t,k)=>noise({t,dur:.08,vol:.25-k*.03,type:"lowpass",freq:600-k*60}));tone({f:420,slide:90,type:"square",dur:.6,vol:.07,cut:1500})};
+// collection: the Locker
+D.tierUp=()=>{tone({f:520,slide:880,type:"sawtooth",dur:.12,vol:.06,cut:2600});tone({t:.1,f:1320,type:"triangle",dur:.18,vol:.07});noise({dur:.05,vol:.08,type:"highpass",freq:6000})};
+D.rarityUp=(r=1)=>{const b=[0,60,64,67,72][r]||64;noise({dur:.5,vol:.07,type:"bandpass",freq:1200,sweep:6000,q:1.5});[0,4,7,12].forEach((k,i)=>tone({t:.18+i*.07,n:b+k,type:"triangle",dur:.35,vol:.08}));tone({t:.46,n:b+19,type:"sine",dur:.6,vol:.06})};
+D.maxTier=()=>{[[60,0],[64,.12],[67,.24],[72,.36]].forEach(([n,t])=>{tone({t,n,type:"sawtooth",dur:.16,vol:.06,cut:3000});tone({t,n:n-12,type:"square",dur:.16,vol:.04,cut:1500})});
+  [72,76,79,84].forEach(n=>tone({t:.5,n,type:"sawtooth",dur:.9,vol:.045,att:.02,cut:3500}));tone({t:.5,f:65,slide:40,type:"sine",dur:.5,vol:.3});noise({t:.5,dur:.6,vol:.08,type:"highpass",freq:5000})};
 D.busHorn=()=>{[0,.26].forEach(t=>[349,440].forEach(f=>[-8,8].forEach(dt=>tone({t,f,type:"sawtooth",dur:.2,vol:.06,cut:1300,detune:dt,bus:verb()}))));noise({t:.1,dur:1.4,vol:.05,type:"bandpass",freq:500,sweep:900,q:.7})};
 
 /* ---- music: a small step sequencer that plans a little ahead, and skips late notes rather than cramming them in ---- */
@@ -225,16 +231,15 @@ const SONGS={
    const bell={0:74,6:73,8:72,12:69}[s];if(bell&&(bar%2===0||s>4))tone({t,n:bell-(bar===3?2:0),type:"sine",dur:1.6,vol:.045,att:.004,bus:musBus});
    if(s===8&&bar%2)noise({t,dur:1.4,vol:.03,type:"bandpass",freq:600,sweep:2400,q:4,bus:musBus});
  }},
- mBlood:{bpm:88,steps:64,play(i,t){ // blood moon: a driving, menacing E phrygian ostinato with heavy hits and clashing high stabs
-   const bar=Math.floor(i/16),s=i%16;const root=[40,41,40,43][bar];
-   if(s%2===0)tone({t,n:root+(s%8===6?1:0),type:"sawtooth",dur:.2,vol:.1,cut:650,bus:musBus});
-   if(s%2===0)tone({t,n:root-12,type:"square",dur:.18,vol:.05,cut:300,bus:musBus});
-   if(s===0||s===10)tone({t,f:90,slide:36,type:"sine",dur:.5,vol:.36,bus:musBus});
-   if(s===4||s===12)noise({t,dur:.18,vol:.14,type:"bandpass",freq:700,q:1.2,bus:musBus});
-   if(s===14&&bar===3)[0,1,2].forEach(k=>tone({t:t+k*.07,f:180-k*30,slide:70,type:"triangle",dur:.12,vol:.18,bus:musBus}));
-   if(s===0&&bar%2===1)[76,77].forEach(n=>tone({t,n,type:"square",dur:.6,vol:.025,cut:2500,bus:musBus}));
-   if(s===8)[64,65,71].forEach(n=>tone({t,n,type:"sawtooth",dur:.9,vol:.016,att:.2,cut:1600,bus:musBus}));
-   if(s%4===3)noise({t,dur:.02,vol:.03,freq:9000,bus:musBus});
+ mBlood:{bpm:74,steps:64,play(i,t){ // blood moon: a dark, cinematic event track in E phrygian, with timpani hits, low brass, string tremolo and a choir-like swell
+   const bar=Math.floor(i/16),s=i%16;const ch=[[52,55,59],[53,57,60],[52,55,59],[50,53,57]][bar];
+   if(s===0)ch.forEach((n,k)=>[-9,9].forEach(dt=>tone({t,n,type:"sawtooth",dur:3.5,vol:.016,att:.35,cut:1500,detune:dt+k*2,bus:musBus})));
+   if(s%2===0&&s<14)tone({t,n:ch[s/2%3]+12,type:"sawtooth",dur:.16,vol:.012,att:.01,cut:2400,bus:musBus});
+   if(s===0||s===6||s===10){tone({t,f:95,slide:40,type:"sine",dur:.6,vol:s?.32:.45,bus:musBus});noise({t,dur:.2,vol:.1,type:"lowpass",freq:260,bus:musBus})}
+   if(s===4||s===12)noise({t,dur:.16,vol:.13,type:"bandpass",freq:900,q:1.1,bus:musBus});
+   if(s%2===1)noise({t,dur:.025,vol:.03,freq:8500,bus:musBus});
+   if(s===8&&(bar===1||bar===3))[64,65,71].forEach(n=>tone({t,n,type:"sawtooth",dur:1.8,vol:.012,att:.6,cut:1100,detune:n===65?-6:6,bus:musBus}));
+   if(bar===3&&s===12)noise({t,dur:.9,vol:.07,type:"bandpass",freq:500,sweep:5000,q:1.4,bus:musBus});
  }},
  mCalm:{bpm:70,steps:64,play(i,t){ // calm moon: soft sine chords, a slow music-box line and a gentle brush, no drums
    const bar=Math.floor(i/16),s=i%16;const ch=[[48,52,55,59],[45,48,52,55],[41,45,48,52],[43,47,50,55]][bar];

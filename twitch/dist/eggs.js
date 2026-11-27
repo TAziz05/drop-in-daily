@@ -10,7 +10,7 @@ function makeAch(C){
     return {days:list.length,mains:list.filter(d=>d.main).length,
       perfectMain:list.some(d=>perfect(d.main))?1:0,fullDay:list.some(d=>SETS.every(k=>d[k]))?1:0,perfectDay:list.some(d=>SETS.every(k=>perfect(d[k])))?1:0,
       topRight:sets.reduce((a,v)=>a+(v.ids||[]).filter((id,i)=>v.marks[i]&&QBYID[id]&&QBYID[id].t==="x").length,0),
-      best:eStats().best,secrets:found.size,streak:(()=>{const ds=Object.keys(days).filter(d=>days[d].main).sort();let b=0,r=0;ds.forEach((d,i)=>{r=i&&Math.round((Date.parse(d)-Date.parse(ds[i-1]))/864e5)===1?r+1:1;b=Math.max(b,r)});return b})()}}
+      best:eStats().best,secrets:found.size,...(store.get("dropin:collsum")||{}),streak:(()=>{const ds=Object.keys(days).filter(d=>days[d].main).sort();let b=0,r=0;ds.forEach((d,i)=>{r=i&&Math.round((Date.parse(d)-Date.parse(ds[i-1]))/864e5)===1?r+1:1;b=Math.max(b,r)});return b})()}}
   const prog=(m,st)=>{const [c,g]=m[3](st);return [Math.min(c,g),g]};
   const earned=st=>C.miles.filter(m=>{const [c,g]=prog(m,st);return c>=g}).map(m=>m[0]);
   // Read saved state (again after the Discord Activity merges in progress from other devices).
@@ -80,6 +80,12 @@ const ACH=makeAch({pfx:"dropin",dayRe:/^dropin3:(\d{4}-\d{2}-\d{2}):(main|e|m|h|
    ["s25","Unstoppable","Reach a 25-question streak in Endless",s=>[s.best,25]],
    ["w7","Locked In","Play the Daily Drop 7 days in a row",s=>[s.streak,7]],
    ["w30","No Days Off","Play the Daily Drop 30 days in a row",s=>[s.streak,30]],
+   ["tier100","Tier Climber","Unlock 100 Battle Pass tiers",s=>[s.tiers||0,100]],
+   ["tier500","Tier Grinder","Unlock 500 Battle Pass tiers",s=>[s.tiers||0,500]],
+   ["maxpass","Max Tier","Max out a Battle Pass",s=>[s.maxed||0,1]],
+   ["chapter","Chapter Complete","Max every Battle Pass in one chapter",s=>[s.chapterDone||0,1]],
+   ["locker","Fully Stocked","Get all 8 Locker slots to Legendary",s=>[s.legendary||0,8]],
+   ["allpass","#1 Victory Royale","Max out every Battle Pass",s=>[s.maxed||0,s.passes||44]],
    ["hunter","Secret Hunter","Find every secret",s=>[s.secrets,EGGS.length]]]});
 window.gameAch=ACH;
 const secret=id=>ACH.secret(id);
@@ -365,6 +371,133 @@ YS.checkFirst=async function(onWin){
  // the page's content sits above the island, so taps are matched by position
  document.addEventListener("click",e=>{if(!food||food.done||e.target.closest("button,a,input,select,textarea,label,.tabs,.egg-toast"))return;
    const r=food.g.getBoundingClientRect(),pad=16;if(e.clientX<r.left-pad||e.clientX>r.right+pad||e.clientY<r.top-pad||e.clientY>r.bottom+pad)return;e.stopImmediatePropagation();tapFood()},true);
+}
+/* ===== Locker: Battle Pass archive and Locker slots =====
+   Every question you answer right unlocks Battle Pass tiers for the season it's about (one tier per question, two if it was in a
+   Daily set, which also earns a Battle Star). Fill a season's pass to reach MAX TIER.
+   Topic questions (weapons, bosses, Sprites, fishing and so on) fill 8 Locker slots that upgrade in rarity as you go. */
+{const LKEY="dropin:locker",SEAS=DATA.seasons||[];
+ const CHAPTERS=[...new Set(SEAS.map(g=>g.ch).filter(c=>/^Chapter \d+$/.test(c)))].sort((a,b)=>parseInt(a.slice(8))-parseInt(b.slice(8))).concat(SEAS.some(g=>g.ch==="Fortnite OG")?["Fortnite OG"]:[]);
+ const PASS=SEAS.filter(g=>CHAPTERS.includes(g.ch));
+ const PREFIX=id=>id.replace(/-[^-]*$/,"");
+ const QN={};Q.forEach(q=>{if(q.era)QN[q.era]=(QN[q.era]||0)+1});
+ // [id, name, groups, icon]
+ const SLOTS=[
+  ["weap","Weapons",["LOOTW","WSTATS","MYTHEX"],'<circle cx="12" cy="12" r="7.5" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="1.6" fill="#fff"/>'],
+  ["item","Items & Vehicles",["LOOTI","LOOTV","POWERS"],'<path d="M9 2h6v3l-1 1v3l4 3v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8l4-3V6L9 5z" fill="#fff"/><path d="M8 15h8v4H8z" fill="rgba(0,0,0,.25)"/>'],
+  ["boss","Bosses & Characters",["BOSS","CHARS","RECRUIT","CONNECT","OUTFITS"],'<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="#fff"/><path d="M5 19h14v2H5z" fill="#fff"/>'],
+  ["sprite","Sprites",["SPRITES","SPRITEV"],'<path d="M12 2c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z" fill="#fff"/><circle cx="10.5" cy="14" r="1" fill="rgba(0,0,0,.35)"/><circle cx="13.5" cy="14" r="1" fill="rgba(0,0,0,.35)"/>'],
+  ["wild","Wildlife & Fishing",["WILD","FISH"],'<path d="M2 12c3-4 8-6 13-4l5-3-1 7 1 7-5-3c-5 2-10 0-13-4z" fill="#fff"/><circle cx="7" cy="11" r="1.2" fill="rgba(0,0,0,.4)"/>'],
+  ["music","Music & Emotes",["MUSIC","EMOTES","WORDS"],'<path d="M9 4l11-2v12.5A2.5 2.5 0 1 1 18 12V6l-7 1.3V17a2.5 2.5 0 1 1-2-2.4z" fill="#fff"/>'],
+  ["collab","Collabs & Cosmetics",["COLLABS","COSLOCK","COSSHOP","SETS"],'<path d="M12 2l2.6 6.4 6.9.4-5.3 4.4 1.7 6.7L12 16.2l-5.9 3.7 1.7-6.7-5.3-4.4 6.9-.4z" fill="#fff"/>'],
+  ["lore","Lore & Story",["LORE","STORY","SNAPLORE","ORIGINS"],'<path d="M4 4h7a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4z" fill="#fff"/><path d="M20 4h-7a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h7z" fill="#fff" opacity=".75"/>']];
+ const SLOTOF={};SLOTS.forEach((s,i)=>s[2].forEach(g=>SLOTOF[g]=i));
+ // Fortnite-style rarities a slot climbs through; each needs a share of that slot's questions (in points)
+ const RAR=[["Common",0,"#7d8590","#5c636c"],["Uncommon",.1,"#69bb2d","#3f8a1c"],["Rare",.25,"#3ba7f2","#1c6ec2"],["Epic",.45,"#b25be2","#7b2fb0"],["Legendary",.7,"#e9893c","#b85618"]];
+ const SLOTN=SLOTS.map(()=>0);Q.forEach(q=>{const i=SLOTOF[PREFIX(q.id)];if(i!=null)SLOTN[i]++});
+ const need=(i,r)=>Math.max(r?3:0,Math.ceil(RAR[r][1]*SLOTN[i]));
+ const rarOf=(p,i)=>{let r=0;RAR.forEach((x,k)=>{if(p>=need(i,k))r=k});return r};
+ let lk=store.get(LKEY)||{};  // question id -> 1 seen, 2 caught, 3 caught in a Daily (Battle Star)
+ const save=()=>{store.set(LKEY,lk);store.set("dropin:collsum",summary());window.gameAch&&gameAch.check()};
+ const val=c=>c===3?2:c===2?1:0;
+ const tier=era=>{let s=0;for(const id in lk){const q=QBYID[id];if(q&&q.era===era)s+=val(lk[id])}return Math.min(s,QN[era]||0)};
+ const stars=era=>{let s=0;for(const id in lk){const q=QBYID[id];if(q&&q.era===era&&lk[id]===3)s++}return s};
+ const slotPts=i=>{let s=0;for(const id in lk)if(SLOTOF[PREFIX(id)]===i)s+=val(lk[id]);return s};
+ const passName=g=>`${g.ch==="Fortnite OG"?"OG":g.ch.replace("Chapter ","C")} · ${g.name.replace("Season ","S").replace("Mini Season","Mini").replace("Chapter 2 Remix","Remix").replace("OG mode","OG")}`;
+ function record(q,ok,daily){if(!q||!q.id)return null;const full=QBYID[q.id]||q,old=lk[q.id]||0,nv=ok?(daily?3:2):1;
+   const era=full.era,slot=SLOTOF[PREFIX(q.id)];
+   const t0=era&&QN[era]?tier(era):0,r0=slot!=null?rarOf(slotPts(slot),slot):0;
+   if(nv>old)lk[q.id]=nv;
+   const out={};
+   if(era&&QN[era]&&PASS.some(g=>g.id===era)){const t1=tier(era);if(t1>t0)out.tier={era,t:t1,n:QN[era],max:t1>=QN[era]}}
+   if(slot!=null){const r1=rarOf(slotPts(slot),slot);if(r1>r0)out.slot={i:slot,r:r1}}
+   return out}
+ function summary(){const ps=PASS.filter(g=>QN[g.id]);const maxed=ps.filter(g=>tier(g.id)>=QN[g.id]);
+   const chapterDone=CHAPTERS.filter(c=>{const x=ps.filter(g=>g.ch===c);return x.length&&x.every(g=>tier(g.id)>=QN[g.id])}).length;
+   return {tiers:ps.reduce((a,g)=>a+tier(g.id),0),maxed:maxed.length,passes:ps.length,chapterDone,legendary:SLOTS.filter((_,i)=>rarOf(slotPts(i),i)===4).length}}
+ let tEl=null,tT=0;
+ function note(r){if(!r)return;
+   if(r.slot){const s=SLOTS[r.slot.i],x=RAR[r.slot.r];window.SND&&SND.play("rarityUp",r.slot.r);toast(`${x[0]} unlocked!`,`Your ${s[1]} slot in the Locker is now ${x[0]}.`,x[2])}
+   if(r.tier){const g=SEAS.find(x=>x.id===r.tier.era);
+     if(r.tier.max){window.SND&&SND.play("maxTier");toast("MAX TIER!",`You maxed out the ${g.ch} ${g.name} Battle Pass: ${g.sub}.`,"#f2c200");return}
+     window.SND&&SND.play("tierUp");if(tEl)tEl.remove();clearTimeout(tT);tEl=document.createElement("div");tEl.className="lk-note";
+     tEl.innerHTML=`<b>Tier up!</b> ${esc(passName(g))} ${esc(g.sub)} <span>Tier ${r.tier.t}/${r.tier.n}</span>`;document.body.appendChild(tEl);
+     requestAnimationFrame(()=>tEl.classList.add("on"));tT=setTimeout(()=>{const t=tEl;if(t){t.classList.remove("on");setTimeout(()=>t.remove(),400)}},3000)}}
+ const _a=answer;answer=function(btn){const q=S&&S.qs&&S.qs[S.i],daily=S&&(S.mode==="main"||S.mode==="daily");_a(btn);if(q){const r=record(q,btn.dataset.o===q.a,daily);save();note(r)}};
+ const _ea=endlessAnswer;endlessAnswer=function(btn){const q=S&&S.cur;_ea(btn);if(q){const r=record(q,btn.dataset.o===q.a,false);save();note(r)}};
+ // first time: everything from past Daily sets counts
+ if(!store.get("dropin:lockerfill")){try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);
+     if(!/^dropin3:\d{4}-\d{2}-\d{2}:[a-z]+$/.test(k||""))continue;const v=JSON.parse(localStorage.getItem(k));
+     if(v&&Array.isArray(v.ids))v.ids.forEach((id,j)=>{if(QBYID[id])record(QBYID[id],!!(v.marks&&v.marks[j]),true)})}}catch(e){}
+   store.set("dropin:lockerfill",1);save()}
+ store.set("dropin:collsum",summary());
+
+ const css=document.createElement("style");css.textContent=`
+.lk-note{position:fixed;left:50%;bottom:18px;z-index:1200;transform:translate(-50%,30px);opacity:0;transition:transform .3s,opacity .3s;max-width:92vw;
+  background:#0b1f4d;color:#fff;border:2px solid #ffd53d;border-radius:8px;padding:9px 14px;font:600 16px/1.3 var(--cond,system-ui);letter-spacing:.3px;box-shadow:0 8px 20px rgba(0,0,40,.4)}
+.lk-note.on{transform:translate(-50%,0);opacity:1}.lk-note b{color:#ffd53d;font-family:var(--display);font-weight:400;letter-spacing:.5px;text-transform:uppercase;margin-right:4px}.lk-note span{opacity:.8;margin-left:6px}
+.lk-h{font-family:var(--display);font-size:30px;text-transform:uppercase;margin:0;letter-spacing:.5px}
+.lk-sub{font-family:var(--cond);font-weight:600;color:#5a6a85;letter-spacing:.3px}
+.lk-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0 20px}
+.lk-slot{position:relative;border-radius:8px;padding:10px 8px 8px;text-align:center;color:#fff;overflow:hidden;background:radial-gradient(circle at 50% 30%,var(--r1),var(--r2) 75%);box-shadow:inset 0 -26px 0 rgba(0,0,0,.25),0 3px 0 rgba(0,0,0,.18)}
+.lk-slot svg{width:44px;height:44px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.lk-slot b{display:block;font-family:var(--cond);font-weight:700;font-size:14px;line-height:1.1;margin-top:4px;text-transform:uppercase;letter-spacing:.4px}
+.lk-slot small{display:block;font-family:var(--cond);font-weight:600;font-size:12px;opacity:.92;margin-top:8px}
+.lk-slot.legend{box-shadow:inset 0 -26px 0 rgba(0,0,0,.25),0 0 0 2px #ffd98a,0 0 16px rgba(255,170,60,.6)}
+.lk-chs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}
+.lk-chs button{font-family:var(--cond);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.4px;border:0;border-radius:6px;padding:6px 10px;cursor:pointer;background:#e3e9f5;color:#0b2a66;transform:skewX(-6deg)}
+.lk-chs button[aria-pressed=true]{background:#0b3f8f;color:#fff}.lk-chs small{opacity:.75;margin-left:4px}
+.lk-passes{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.lk-pass{position:relative;text-align:left;border:0;border-radius:8px;padding:10px 11px 11px;color:#fff;cursor:pointer;font:inherit;overflow:hidden;
+  background:linear-gradient(160deg,var(--r1),var(--r2));box-shadow:0 3px 0 rgba(0,0,0,.2)}
+.lk-pass.none{background:linear-gradient(160deg,#9aa4b4,#6b7486)}.lk-pass .id{font-family:var(--cond);font-weight:700;font-size:13px;letter-spacing:.6px;opacity:.9;text-transform:uppercase}
+.lk-pass .nm{font-family:var(--display);font-size:22px;line-height:1.05;text-transform:uppercase;margin:3px 0 8px;letter-spacing:.3px;min-height:46px;display:flex;align-items:flex-end}
+.lk-pass .bar{height:9px;border-radius:5px;background:rgba(0,0,0,.28);overflow:hidden}.lk-pass .bar span{display:block;height:100%;background:#ffd53d}
+.lk-pass .tr{display:flex;justify-content:space-between;font-family:var(--cond);font-weight:700;font-size:13px;margin-top:5px;letter-spacing:.3px}
+.lk-pass .max{position:absolute;top:8px;right:-24px;transform:rotate(35deg);background:#ffd53d;color:#3b2a00;font-family:var(--display);font-size:12px;padding:2px 26px;letter-spacing:.5px}
+@media (max-width:480px){.lk-slots{grid-template-columns:repeat(2,1fr)}.lk-passes{grid-template-columns:repeat(2,1fr)}.lk-pass .nm{font-size:18px;min-height:38px}}
+.lk-pop{position:fixed;inset:0;z-index:1300;background:rgba(5,15,45,.6);display:grid;place-items:center;padding:16px}
+.lk-card{background:#fff;border-radius:10px;max-width:340px;width:100%;overflow:hidden;text-align:center;color:#13244a}
+.lk-card .top{padding:16px;color:#fff;background:linear-gradient(160deg,var(--r1),var(--r2))}.lk-card h3{margin:4px 0 0;font-family:var(--display);font-size:28px;text-transform:uppercase;font-weight:400}
+.lk-card p{margin:8px 16px;font-family:var(--cond);font-weight:600;font-size:16px}
+/* tabs: play modes, then the other three, then the Locker and achievements */
+#tab-seasons,#tab-where,#tab-bank{grid-column:span 4}#tab-locker,#tab-ach{grid-column:span 6;font-size:16px;letter-spacing:.4px}#tab-locker{order:7}#tab-ach{order:8}
+@media (max-width:600px){#tab-locker{grid-column:span 1!important}#tab-ach{grid-column:span 1!important}#tab-bank{grid-column:1/-1!important}}`;document.head.appendChild(css);
+
+ const passCol=(t,n)=>{if(!t)return null;const f=t/n;return f>=1?["#ffd53d","#e9893c"]:f>=.75?RAR[4].slice(2):f>=.5?RAR[3].slice(2):f>=.25?RAR[2].slice(2):RAR[1].slice(2)};
+ let ch=0;
+ function render(){
+   const passes=PASS.filter(g=>QN[g.id]),maxed=passes.filter(g=>tier(g.id)>=QN[g.id]).length,tiers=passes.reduce((a,g)=>a+tier(g.id),0),all=passes.reduce((a,g)=>a+QN[g.id],0);
+   const chs=CHAPTERS.map(c=>{const ps=passes.filter(g=>g.ch===c);return [c,ps.filter(g=>tier(g.id)>=QN[g.id]).length,ps.length]}).filter(x=>x[2]);
+   if(ch>=chs.length)ch=0;const cur=chs[ch][0];
+   app.innerHTML=`<div class="panel" id="lk-root">
+    <h2 class="lk-h">Locker</h2>
+    <div class="lk-sub">${tiers.toLocaleString()} of ${all.toLocaleString()} Battle Pass tiers · ${maxed}/${passes.length} passes at MAX TIER</div>
+    <p style="margin:8px 0 4px">Every question you get right unlocks a tier in the Battle Pass for its season. Daily Drop and By Difficulty hits unlock two tiers and earn a <b style="color:#c99700">★ Battle Star</b>.</p>
+    <h3 class="ach-h">Locker slots</h3>
+    <div class="lk-slots">${SLOTS.map((s,i)=>{const p=slotPts(i),r=rarOf(p,i),x=RAR[r],nx=RAR[r+1];
+      return `<div class="lk-slot ${r===4?"legend":""}" style="--r1:${x[2]};--r2:${x[3]}"><svg viewBox="0 0 24 24">${s[3]}</svg><b>${esc(s[1])}</b><small>${x[0]}${nx?` · ${p}/${need(i,r+1)}`:" · MAXED"}</small></div>`}).join("")}</div>
+    <h3 class="ach-h">Battle Passes</h3>
+    <div class="lk-chs">${chs.map((c,i)=>`<button data-c="${i}" aria-pressed="${i===ch}">${esc(c[0].replace("Chapter ","Ch "))}<small>${c[1]}/${c[2]}</small></button>`).join("")}</div>
+    <div class="lk-passes">${passes.filter(g=>g.ch===cur).map(g=>{const n=QN[g.id],t=tier(g.id),col=passCol(t,n),st=stars(g.id);
+      return `<button class="lk-pass ${col?"":"none"}" data-id="${g.id}" style="${col?`--r1:${col[0]};--r2:${col[1]}`:""}">${t>=n?'<span class="max">MAX</span>':""}
+       <div class="id">${esc(g.ch==="Fortnite OG"?"Fortnite OG":g.ch+" · "+g.name)}</div><div class="nm">${esc(g.sub)}</div>
+       <div class="bar"><span style="width:${100*t/n}%"></span></div><div class="tr"><span>Tier ${t}/${n}</span><span>${st?`★ ${st}`:""}</span></div></button>`}).join("")}</div></div>`;
+   app.querySelectorAll(".lk-chs button").forEach(b=>b.onclick=()=>{ch=+b.dataset.c;render()});
+   app.querySelectorAll(".lk-pass").forEach(b=>b.onclick=()=>card(b.dataset.id));
+ }
+ function card(id){const g=SEAS.find(x=>x.id===id),n=QN[id],t=tier(id),col=passCol(t,n)||["#9aa4b4","#6b7486"];let c=0,s=0;
+   for(const k in lk){const q=QBYID[k];if(q&&q.era===id){if(lk[k]>=2)c++;else s++}}
+   const o=document.createElement("div");o.className="lk-pop";
+   o.innerHTML=`<div class="lk-card" role="dialog" aria-label="${esc(g.sub)}"><div class="top" style="--r1:${col[0]};--r2:${col[1]}"><div style="font-family:var(--cond);font-weight:700;letter-spacing:.6px;text-transform:uppercase">${esc(g.ch)} · ${esc(g.name)}</div><h3>${esc(g.sub)}</h3></div>
+    <p style="font-size:20px;margin-top:14px">${t>=n?"MAX TIER":`Tier ${t} of ${n}`}</p><p>${c} hit${c===1?"":"s"} · ${s} miss${s===1?"":"es"} so far · ★ ${stars(id)} Battle Star${stars(id)===1?"":"s"}</p>
+    <p style="font-weight:500;color:#5a6a85">Questions about this season turn up in the Daily Drop, Endless and Chapters &amp; Seasons.</p>
+    <button class="btn" type="button" style="margin:6px 0 16px">Close</button></div>`;
+   document.body.appendChild(o);const close=()=>o.remove();o.onclick=ev=>{if(ev.target===o)close()};o.querySelector(".btn").onclick=close}
+ const tab=document.createElement("button");tab.className="tab";tab.setAttribute("role","tab");tab.id="tab-locker";tab.dataset.v="locker";tab.textContent="Locker";
+ const achT=document.getElementById("tab-ach");achT?achT.before(tab):document.querySelector(".tabs").appendChild(tab);
+ tab.onclick=()=>{S=null;document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",String(b===tab)));render();scrollTo({top:0})};
+ window.__locker={record,lk:()=>lk,render};
 }
 /* Drop-In: the island comes closer once you've dropped in, the Battle Bus flies over, a loot llama grazes on the island,
    and the full moon is worth a tap */
