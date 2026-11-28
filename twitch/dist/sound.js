@@ -340,3 +340,12 @@ const _ev=endlessView;endlessView=function(){_ev.apply(this,arguments);SND.music
 const _ee=endlessEnd;endlessEnd=function(){_ee.apply(this,arguments);SND.music("endless")};
 
 })();
+/* answer log: every answer in every mode, kept on this device for future XP */
+(()=>{if(typeof answer!=="function"||typeof endlessAnswer!=="function"||typeof dayKey==="undefined")return;const K="dropin:alog";
+ const log=(mode,q,ok)=>{if(!q||!q.id)return;try{const L=JSON.parse(localStorage.getItem(K)||"{}");(L[dayKey]=L[dayKey]||[]).push(mode+"|"+q.id+"|"+(ok?1:0));localStorage.setItem(K,JSON.stringify(L))}catch(e){}};
+ const modeOf=()=>!S?"?":S.mode==="daily"&&S.t?"daily-"+S.t:S.mode==="season"&&S.title?"topic:"+S.title:S.mode||"?";
+ const fa=answer;answer=function(btn){const q=S&&S.qs&&S.qs[S.i],m=modeOf(),ok=!!q&&btn&&btn.dataset.o===q.a;const r=fa.apply(this,arguments);if(q)log(m,q,ok);return r};
+ const fe=endlessAnswer;endlessAnswer=function(btn){const q=S&&S.cur,ok=!!q&&btn&&btn.dataset.o===q.a;const r=fe.apply(this,arguments);if(q)log("endless",q,ok);return r};
+ const wrap=(o,mode)=>{const w=window[o];if(w&&w.collect&&!w.collect.__l){const f=w.collect;w.collect=function(q){log(mode,q,true);return f.apply(this,arguments)};w.collect.__l=1}};
+ wrap("__locker","crate");wrap("__dex","grass");
+})();
