@@ -26,7 +26,7 @@ function makeAch(C){
     app.innerHTML=`<div id="ach-root"><h2>Achievements</h2><p class="muted">${have} of ${total} unlocked. Milestones come from playing; secrets stay hidden until you find them.</p>
      <div class="ach-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>${window.YS?YS.mineHTML():""}
      <h3 class="ach-h">Milestones</h3><ul class="ach-list">${C.miles.map(m=>{const [c,g]=prog(m,st),ok=c>=g;
-       return `<li class="${ok?"":"no"}">${C.medal(ok,"mile")}<div class="ach-txt"><b>${m[1]}</b><span>${m[2]}</span>${!ok&&g>1?`<div class="ach-mini"><span style="width:${100*c/g}%"></span></div><span class="ach-n">${c.toLocaleString()}/${g.toLocaleString()}</span>`:""}</div></li>`}).join("")}</ul>
+       return `<li class="${ok?"":"no"}">${C.medal(ok,"mile",m[0])}<div class="ach-txt"><b>${m[1]}</b><span>${m[2]}</span>${!ok&&g>1?`<div class="ach-mini"><span style="width:${100*c/g}%"></span></div><span class="ach-n">${c.toLocaleString()}/${g.toLocaleString()}</span>`:""}</div></li>`}).join("")}</ul>
      <h3 class="ach-h">Secrets <small>${found.size}/${C.eggs.length}</small></h3><ul class="ach-list">${C.eggs.map(([id,n,d,h])=>found.has(id)
        ?`<li>${C.medal(true,"secret")}<div class="ach-txt"><b>${n}</b><span>${d}</span><span class="ach-n">${times(counts[id]||1)}</span></div></li>`
        :`<li class="no">${C.medal(false,"secret")}<div class="ach-txt"><b>Secret achievement</b><span>Find it to reveal it.</span><details><summary>Show hint</summary><span>${h}</span></details></div></li>`).join("")}</ul></div>`}
@@ -64,7 +64,8 @@ function toast(title,html,c="#ffd53d",ms=7000){if(tEl){tQueue.push([title,html,c
   d.innerHTML=`<b>${esc(title)}</b><p>${html}</p><button class="x" aria-label="Close">×</button>`;document.body.appendChild(d);tEl=d;
   const close=()=>{if(tEl!==d)return;clearTimeout(tTimer);d.classList.add("out");setTimeout(()=>d.remove(),250);tEl=null;const n=tQueue.shift();if(n)setTimeout(()=>toast(...n),260)};
   d.querySelector(".x").onclick=close;tTimer=setTimeout(close,ms)}
-const medal=(on,kind)=>`<svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M17 2 30 9.5v15L17 32 4 24.5v-15z" fill="${on?(kind==="secret"?"#c56bff":"#f2c200"):"#dfe7f6"}" stroke="${on?"#0d1b3d":"#9fb0d0"}" stroke-width="2"/>${on?`<path d="m17 9 2.4 5 5.4.6-4 3.7 1.1 5.3L17 21l-4.9 2.6 1.1-5.3-4-3.7 5.4-.6z" fill="#fff"/>`:kind==="secret"?`<text x="17" y="22.5" text-anchor="middle" font-size="15" font-weight="700" fill="#9fb0d0">?</text>`:`<path d="M12 16v-3a5 5 0 0 1 10 0v3M11 16h12v8H11z" fill="none" stroke="#9fb0d0" stroke-width="2"/>`}</svg>`;
+const MTYPE=id=>/^(first|squad|vr|untouch)$/.test(id)?"#3d9bff":/^d\d/.test(id)?"#4fc23a":/^w\d/.test(id)?"#f08a24":/^s\d/.test(id)?"#ff4b3e":id==="myth"||id==="allpass"?"#f2c200":id==="hunter"?"#ff4fa3":id?"#1fc3c7":"#f2c200";
+const medal=(on,kind,id)=>`<svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M17 2 30 9.5v15L17 32 4 24.5v-15z" fill="${on?(kind==="secret"?"#c56bff":MTYPE(id)):"#dfe7f6"}" stroke="${on?"#0d1b3d":"#9fb0d0"}" stroke-width="2"/>${on?(id==="allpass"?`<path d="M9.5 22.5h15l1.6-10.6-4.9 3.9L17 8.6l-4.2 7.2-4.9-3.9z" fill="#fff"/><path d="M9.5 24.2h15v2.2h-15z" fill="#fff"/>`:`<path d="m17 9 2.4 5 5.4.6-4 3.7 1.1 5.3L17 21l-4.9 2.6 1.1-5.3-4-3.7 5.4-.6z" fill="#fff"/>`):kind==="secret"?`<text x="17" y="22.5" text-anchor="middle" font-size="15" font-weight="700" fill="#9fb0d0">?</text>`:`<path d="M12 16v-3a5 5 0 0 1 10 0v3M11 16h12v8H11z" fill="none" stroke="#9fb0d0" stroke-width="2"/>`}</svg>`;
 const ACH=makeAch({pfx:"dropin",dayRe:/^dropin3:(\d{4}-\d{2}-\d{2}):(main|e|m|h|x)$/,eggs:EGGS,medal,
   notify:(t,txt)=>{const sec=t.startsWith("Secret");toast(t,esc(txt),sec?"#c56bff":"#f2c200");setTimeout(()=>window.SND&&SND.play(sec?"secret":"achievement"),sec?700:0)},
   miles:[
@@ -93,7 +94,7 @@ const fact=()=>{const pool=Q.filter(q=>(q.t==="e"||q.t==="m")&&!q.clue&&q.q.leng
 const playing=()=>!!app.querySelector(".opt")||!!document.querySelector(".fn-jump");
 
 /* 1. supply drops */
-const CRATE=`<svg viewBox="0 0 84 120" aria-hidden="true"><path d="M4 38C4 14 22 2 42 2s38 12 38 36c-6-5-12-5-19 0-6-5-13-5-19 0-6-5-13-5-19 0-7-5-13-5-19 0z" fill="#fff"/><path d="M23 38c0-22 8-35 19-36 11 1 19 14 19 36-6-5-13-5-19 0-6-5-13-5-19 0z" fill="#2f8cff"/><path d="M6 38l22 44M42 38v44M78 38 56 82M24 38l12 44M60 38 48 82" stroke="#0d1b3d" stroke-width="1.4" opacity=".6"/><rect x="18" y="80" width="48" height="38" rx="3" fill="#c98a3d" stroke="#0d1b3d" stroke-width="2.5"/><path d="M18 92h48M18 106h48" stroke="#8a5a1f" stroke-width="2"/><path d="M18 80l48 38M66 80l-48 38" stroke="#8a5a1f" stroke-width="2" opacity=".5"/><rect x="36" y="94" width="12" height="10" rx="2" fill="#ffd53d" stroke="#0d1b3d" stroke-width="2"/></svg>`;
+const CRATE=`<svg viewBox="0 0 84 120" aria-hidden="true"><circle cx="42" cy="96" r="30" fill="#59b4ff" opacity=".28"/><path d="M38 50 21 79M46 50l17 29M42 52v24" stroke="#e8f2ff" stroke-width="1.6"/><circle cx="42" cy="27" r="25" fill="#ffd53d" stroke="#0d1b3d" stroke-width="2.5"/><path d="M42 2c-9 6-12 15-12 25s3 19 12 25M42 2c9 6 12 15 12 25s-3 19-12 25" fill="none" stroke="#e0a70f" stroke-width="1.6"/><ellipse cx="33" cy="16" rx="7" ry="4.5" fill="#fff" opacity=".45" transform="rotate(-30 33 16)"/><path d="M38.5 51h7l-2 4h-3z" fill="#e0a70f" stroke="#0d1b3d" stroke-width="1.5"/><rect x="17" y="80" width="50" height="37" rx="3" fill="#1f6fe0" stroke="#0d1b3d" stroke-width="2.5"/><rect x="14" y="75" width="56" height="10" rx="2.5" fill="#3d9bff" stroke="#0d1b3d" stroke-width="2.5"/><path d="M17 96h50M17 104h50" stroke="#ffd53d" stroke-width="3.2"/><path d="M28 85v32M56 85v32" stroke="#0d1b3d" stroke-width="1.6" opacity=".4"/><circle cx="42" cy="100" r="7" fill="#fff" stroke="#0d1b3d" stroke-width="2"/><path d="m42 95.6 1.4 2.9 3.2.4-2.3 2.1.6 3.1-2.9-1.6-2.9 1.6.6-3.1-2.3-2.1 3.2-.4z" fill="#2f8cff"/></svg>`;
 function spawnCrate(){
   if(document.querySelector(".egg-crate")||playing()||document.hidden){schedule(15000);return}
   const c=document.createElement("button");c.className="egg-crate";c.type="button";c.setAttribute("aria-label","Supply drop. Tap to open");c.innerHTML=CRATE;
@@ -105,8 +106,8 @@ function spawnCrate(){
     setTimeout(()=>{c.remove();schedule()},320);
     toast("Supply drop!","Loot fact: "+fact(),"#59a8ff",10000);secret("crate");setTimeout(()=>window.__locker&&window.__locker.collect(window.__lastFact),1200)};
 }
-function schedule(ms){setTimeout(spawnCrate,ms||40000+Math.random()*30000)}
-schedule(9000);
+function schedule(ms){setTimeout(spawnCrate,ms||90000+Math.random()*60000)}
+schedule(25000);
 
 // No supply drops during a game: a falling crate is cleared away when a question starts.
 const _qe=question;question=function(){_qe.apply(this,arguments);hideCrate()};
@@ -384,12 +385,12 @@ YS.checkFirst=async function(onWin){
  // [id, name, groups, icon]
  const SLOTS=[
   ["weap","Weapons",["LOOTW","WSTATS","MYTHEX"],'<circle cx="12" cy="12" r="7.5" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="1.6" fill="#fff"/>'],
-  ["item","Items & Vehicles",["LOOTI","LOOTV","POWERS"],'<path d="M9 2h6v3l-1 1v3l4 3v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8l4-3V6L9 5z" fill="#fff"/><path d="M8 15h8v4H8z" fill="rgba(0,0,0,.25)"/>'],
+  ["item","Items & Vehicles",["LOOTI","LOOTV","POWERS"],'<rect x="7.4" y="1.6" width="9.2" height="3.4" rx="1" fill="#fff" opacity=".8"/><rect x="6.4" y="4.6" width="11.2" height="2.6" rx="1.1" fill="#fff"/><path d="M7.6 7.2h8.8c3.6 1.5 5.6 4.3 5.6 7.6 0 4.6-4 7.6-10 7.6S2 19.4 2 14.8c0-3.3 2-6.1 5.6-7.6z" fill="#fff"/><path d="M12 10.6l3.6 1.4v2.9c0 2.2-1.6 3.6-3.6 4.3-2-.7-3.6-2.1-3.6-4.3V12z" fill="rgba(0,0,0,.28)"/><path d="M4.6 12.6c.6-1.6 1.6-2.6 2.8-3.2" stroke="rgba(0,0,0,.18)" stroke-width="1.1" fill="none" stroke-linecap="round"/>'],
   ["boss","Bosses & Characters",["BOSS","CHARS","RECRUIT","CONNECT","OUTFITS"],'<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="#fff"/><path d="M5 19h14v2H5z" fill="#fff"/>'],
   ["sprite","Sprites",["SPRITES","SPRITEV"],'<path d="M12 2c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z" fill="#fff"/><circle cx="10.5" cy="14" r="1" fill="rgba(0,0,0,.35)"/><circle cx="13.5" cy="14" r="1" fill="rgba(0,0,0,.35)"/>'],
   ["wild","Wildlife & Fishing",["WILD","FISH"],'<path d="M2 12c3-4 8-6 13-4l5-3-1 7 1 7-5-3c-5 2-10 0-13-4z" fill="#fff"/><circle cx="7" cy="11" r="1.2" fill="rgba(0,0,0,.4)"/>'],
   ["music","Music & Emotes",["MUSIC","EMOTES","WORDS"],'<path d="M9 4l11-2v12.5A2.5 2.5 0 1 1 18 12V6l-7 1.3V17a2.5 2.5 0 1 1-2-2.4z" fill="#fff"/>'],
-  ["collab","Collabs & Cosmetics",["COLLABS","COSLOCK","COSSHOP","SETS"],'<path d="M12 2l2.6 6.4 6.9.4-5.3 4.4 1.7 6.7L12 16.2l-5.9 3.7 1.7-6.7-5.3-4.4 6.9-.4z" fill="#fff"/>'],
+  ["collab","Collabs & Cosmetics",["COLLABS","COSLOCK","COSSHOP","SETS"],'<g transform="rotate(38 12 12)"><rect x="10.8" y="6" width="2.6" height="16.5" rx="1.1" fill="#fff"/><path d="M1.6 10.6C4.6 5 9 3.6 12 3.6s7.4 1.4 10.4 7c-3-2.4-6.6-3.4-10.4-3.4S4.6 8.2 1.6 10.6z" fill="#fff"/><rect x="9.6" y="3.4" width="5" height="5" rx="1" fill="#fff"/><path d="M10.4 16h3.4M10.4 18.6h3.4" stroke="rgba(0,0,0,.25)" stroke-width="1"/></g>'],
   ["lore","Lore & Story",["LORE","STORY","SNAPLORE","ORIGINS"],'<path d="M4 4h7a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4z" fill="#fff"/><path d="M20 4h-7a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h7z" fill="#fff" opacity=".75"/>']];
  const SLOTOF={};SLOTS.forEach((s,i)=>s[2].forEach(g=>SLOTOF[g]=i));
  // Fortnite-style rarities a slot climbs through; each needs a share of that slot's questions (in points)
@@ -419,7 +420,7 @@ YS.checkFirst=async function(onWin){
  function note(r){if(!r)return;
    if(r.slot){const s=SLOTS[r.slot.i],x=RAR[r.slot.r];window.SND&&SND.play("rarityUp",r.slot.r);toast(`${x[0]} unlocked!`,`Your ${s[1]} slot in the Locker is now ${x[0]}.`,x[2])}
    if(r.tier){const g=SEAS.find(x=>x.id===r.tier.era);
-     if(r.tier.max){window.SND&&SND.play("maxTier");toast("MAX TIER!",`You maxed out the ${g.ch} ${g.name} Battle Pass: ${g.sub}.`,"#f2c200");return}
+     if(r.tier.max){window.SND&&SND.play("maxTier");toast("MAX TIER!",`<svg class="lk-chest" viewBox="0 0 48 40" aria-hidden="true"><path d="M11 21 4 1h40l-7 20z" fill="#ffe27a" opacity=".75"/><path d="M17 21 14 6h20l-3 15z" fill="#fff8c8"/><rect x="6" y="21" width="36" height="16" rx="2" fill="#d99a3a" stroke="#0d1b3d" stroke-width="2"/><path d="M6 27h36" stroke="#8a5a1f" stroke-width="2"/><path d="M5 21 9 11h30l4 10z" fill="#f2b84b" stroke="#0d1b3d" stroke-width="2" stroke-linejoin="round"/><rect x="20" y="24" width="8" height="8" rx="1.5" fill="#ffd53d" stroke="#0d1b3d" stroke-width="2"/></svg>You maxed out the ${g.ch} ${g.name} Battle Pass: ${esc(g.sub)}.`,"#f2c200");return}
      window.SND&&SND.play("tierUp");if(tEl)tEl.remove();clearTimeout(tT);tEl=document.createElement("div");tEl.className="lk-note";
      tEl.innerHTML=`<b>Tier up!</b> ${esc(passName(g))} ${esc(g.sub)} <span>Tier ${r.tier.t}/${r.tier.n}</span>`;document.body.appendChild(tEl);
      requestAnimationFrame(()=>tEl.classList.add("on"));tT=setTimeout(()=>{const t=tEl;if(t){t.classList.remove("on");setTimeout(()=>t.remove(),400)}},3000)}}
@@ -433,6 +434,7 @@ YS.checkFirst=async function(onWin){
  store.set("dropin:collsum",summary());
 
  const css=document.createElement("style");css.textContent=`
+.lk-chest{float:left;width:58px;height:48px;margin:0 10px 2px 0;animation:lkChest .7s cubic-bezier(.2,1.7,.4,1) both}@keyframes lkChest{0%{transform:scale(.3) translateY(10px);opacity:0}100%{transform:none;opacity:1}}
 .lk-note{position:fixed;left:50%;bottom:18px;z-index:1200;transform:translate(-50%,30px);opacity:0;transition:transform .3s,opacity .3s;max-width:92vw;
   background:#0b1f4d;color:#fff;border:2px solid #ffd53d;border-radius:8px;padding:9px 14px;font:600 16px/1.3 var(--cond,system-ui);letter-spacing:.3px;box-shadow:0 8px 20px rgba(0,0,40,.4)}
 .lk-note.on{transform:translate(-50%,0);opacity:1}.lk-note b{color:#ffd53d;font-family:var(--display);font-weight:400;letter-spacing:.5px;text-transform:uppercase;margin-right:4px}.lk-note span{opacity:.8;margin-left:6px}
